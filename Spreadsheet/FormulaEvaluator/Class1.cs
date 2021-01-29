@@ -17,12 +17,15 @@ namespace FormulaEvaluator
         public static int Evaluate(string input, Lookup variable)
         {
             string[] substrings = Regex.Split(input, "(\\()|(\\))|(-)|(\\+)|(\\*)|(/)");
-
             Stack<int> valueStack = new Stack<int>();
             Stack<string> operatorStack = new Stack<string>();
             foreach (string t in substrings)
             {
                 //Extension method 
+                if (t.Equals(""))
+                {
+                    continue;
+                }
                 if (t.Equals(" "))
                 {
                     continue;
@@ -35,41 +38,16 @@ namespace FormulaEvaluator
                         valueStackEmptyCheck(valueStack.Count);
                         int v = Calculator(number, valueStack.Pop(), operatorStack.Pop());
                         valueStack.Push(v);
-
+                        continue;
                     }
                     else
                     {
                         valueStack.Push(number);
+                        continue;
                     }
 
 
                 }
-
-                if (VariablesVerification(t))
-                {
-                    if (operatorStack.IsOnTop("*") || operatorStack.IsOnTop("/"))
-                    {
-                        valueStackEmptyCheck(valueStack.Count);
-                        try
-                        {
-                            int v = Calculator(variable(t), valueStack.Pop(), operatorStack.Pop());
-                            valueStack.Push(v);
-                        }
-
-                        catch
-                        {
-                            throw new ArgumentException("Can not find variable.");
-                        }
-
-                    }
-                    else
-                    {
-                        valueStack.Push(variable(t));
-                    }
-                }
-
-           
-      
 
                 if (t.Equals("+") || t.Equals("-"))
                 {
@@ -80,16 +58,19 @@ namespace FormulaEvaluator
                         valueStack.Push(value);
                     }
                     operatorStack.Push(t);
+                    continue;
                 }
 
                 if (t.Equals("*") || t.Equals("/"))
                 {
                     operatorStack.Push(t);
+                    continue;
                 }
 
                 if (t.Equals("("))
                 {
                     operatorStack.Push(t);
+                    continue;
                 }
 
                 if (t.Equals(")"))
@@ -113,7 +94,36 @@ namespace FormulaEvaluator
                         int v = Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
                         valueStack.Push(v);
                     }
+                    continue;
                 }
+
+
+                if (VariablesVerification(t))
+                {
+                    if (operatorStack.IsOnTop("*") || operatorStack.IsOnTop("/"))
+                    {
+                        valueStackEmptyCheck(valueStack.Count);
+                        try
+                        {
+                            int v = Calculator(variable(t), valueStack.Pop(), operatorStack.Pop());
+                            valueStack.Push(v);
+                            continue;
+                        }
+
+                        catch
+                        {
+                            throw new ArgumentException("Can not find variable.");
+                        }
+
+                    }
+                    else
+                    {
+                        valueStack.Push(variable(t));
+                    }
+                }
+
+
+
 
             }
 
@@ -158,12 +168,16 @@ namespace FormulaEvaluator
             return 0;
         }
 
-        public static bool VariablesVerification(string s)
+        public static bool VariablesVerification(string v)
         {
-            Regex regex = new Regex(@"^[a-zA-Z]+\d+$");
-          
+            Regex regex = new Regex(@"\b[a-zA-Z]+\d+\b");
+            bool boo = regex.IsMatch(v);
+            if (boo == false)
+            {
+                throw new ArgumentException("Invalid variable");
+            }
 
-            return regex.IsMatch(s);
+            return regex.IsMatch(v);
         }
 
         private static void stackThrowLessThan2(int e)
@@ -188,7 +202,7 @@ namespace FormulaEvaluator
     static class StackExtentions
     {
         public static bool IsOnTop<T>(this Stack<T> stack, string str)
-        { 
+        {
 
 
             if (stack.Count < 1)
