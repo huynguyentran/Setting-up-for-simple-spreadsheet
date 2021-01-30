@@ -255,9 +255,9 @@ namespace FormulaEvaluator
          *
          *@throws             If the expression is invalid.
          */
-        private static void stackThrowLessThan2(int e)
+        private static void stackThrowLessThan2(int count)
         {
-            if (e < 2)
+            if (count < 2)
             {
                 throw new ArgumentException("Invalid expression.");
             }
@@ -268,9 +268,9 @@ namespace FormulaEvaluator
         *
         *@throws             If the expression is invalid.
         */
-        private static void valueStackEmptyCheck(int e)
+        private static void valueStackEmptyCheck(int count)
         {
-            if (e == 0)
+            if (count == 0)
             {
                 throw new ArgumentException("Invalid expression.");
             }
