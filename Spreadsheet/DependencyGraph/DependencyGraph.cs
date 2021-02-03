@@ -46,7 +46,7 @@ namespace SpreadsheetUtilities
         //private List<Dictionary<string, List<string>>> dg;
         private Dictionary<string, List<string>> dependents;
         private Dictionary<string, List<string>> dependees;
-        private int numberOfPair; 
+        private int numberOfPair;
 
         /// <summary>
         /// Creates an empty DependencyGraph.
@@ -65,8 +65,9 @@ namespace SpreadsheetUtilities
         /// </summary>
         public int Size
         {
-            get {  
-                   return this.numberOfPair;
+            get
+            {
+                return this.numberOfPair;
             }
         }
 
@@ -122,11 +123,8 @@ namespace SpreadsheetUtilities
             {
                 return new List<string>();
             }
-            //dependets.Item? 
-            // No depedents
-            // return new Dictionary
-            // don't return null; 
-            return dependentsList;
+            //This is temporary.
+            return new List<string>(dependentsList);
         }
 
         /// <summary>
@@ -155,25 +153,27 @@ namespace SpreadsheetUtilities
         /// <param name="t"> t cannot be evaluated until s is</param>        /// 
         public void AddDependency(string s, string t)
         {
-            if (!dependees.ContainsKey(t)) {
+            // 
+            if (dependees.ContainsKey(t) && dependents.ContainsKey(s))
+            {
+                return;
+            }
+
+            if (!dependees.ContainsKey(t))
+            {
                 List<string> newDependees = new List<string>();
                 newDependees.Add(s);
-                //newDependess.Add(s);
-                //dependees[t]= newDependess ;
-                //   dependees[t].Add(s);
                 dependees.Add(t, newDependees);
             }
-           
 
-            if (!dependents.ContainsKey(s)) {
+            if (!dependents.ContainsKey(s))
+            {
                 List<string> newDependents = new List<string>();
                 newDependents.Add(t);
                 dependents.Add(s, newDependents);
-                //dependents[s].Add(t);
+
             }
             this.numberOfPair++;
-
-            //Add to the list sting in the key value list ?
 
         }
 
@@ -197,7 +197,7 @@ namespace SpreadsheetUtilities
         /// t in newDependents, adds the ordered pair (s,t).
         /// </summary>
         public void ReplaceDependents(string s, IEnumerable<string> newDependents)
-            //use remove then add
+        //use remove then add
 
         {
             //for each depenencee in s 
