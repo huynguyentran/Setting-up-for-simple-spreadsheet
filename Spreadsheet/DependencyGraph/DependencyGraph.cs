@@ -118,13 +118,13 @@ namespace SpreadsheetUtilities
         /// </summary>
         public IEnumerable<string> GetDependents(string s)
         {
-            List<string> dependentsList = dependents[s];
-            if (dependentsList.Count == 0)
+
+            if (dependents[s].Count == 0)
             {
                 return new List<string>();
             }
             //This is temporary.
-            return new List<string>(dependentsList);
+            return new List<string>(dependents[s]);
         }
 
         /// <summary>
@@ -137,7 +137,7 @@ namespace SpreadsheetUtilities
             {
                 return new List<string>();
             }
-            return  new List<String>(dependentsList);
+            return new List<String>(dependentsList);
         }
 
 
@@ -153,10 +153,19 @@ namespace SpreadsheetUtilities
         /// <param name="t"> t cannot be evaluated until s is</param>        /// 
         public void AddDependency(string s, string t)
         {
-            // 
-            if (dependees.ContainsKey(t) && dependents.ContainsKey(s))
+       
+             //use set ( ordered, reverse relationship is fine. HashSet)
+
+            if (!dependents.ContainsKey(s)) // Checking for the key 
             {
-                return;
+                //If do not have any depedents, creates a new list
+                List<string> newDependents = new List<string>();
+                newDependents.Add(t);
+                dependents.Add(s, newDependents);
+            }
+            else
+            {
+                dependents[s].Add(t);
             }
 
             if (!dependees.ContainsKey(t))
@@ -165,13 +174,9 @@ namespace SpreadsheetUtilities
                 newDependees.Add(s);
                 dependees.Add(t, newDependees);
             }
-
-            if (!dependents.ContainsKey(s))
+            else
             {
-                List<string> newDependents = new List<string>();
-                newDependents.Add(t);
-                dependents.Add(s, newDependents);
-
+                dependees[t].Add(s);
             }
             this.numberOfPair++;
 
@@ -204,15 +209,7 @@ namespace SpreadsheetUtilities
             // Remove 
             //foreach (string str in newDependets)
             // AdddDependency(s, str)
-            foreach (string dependents in GetDependents(s))
-            {
-                RemoveDependency(s, dependents);
-            }
 
-            foreach (string t in newDependents)
-            {
-                AddDependency(s, t);
-            }
 
 
         }
@@ -224,15 +221,7 @@ namespace SpreadsheetUtilities
         /// </summary>
         public void ReplaceDependees(string s, IEnumerable<string> newDependees)
         {
-            foreach (string dependees in GetDependees(s))
-            {
-                RemoveDependency(dependees,s );
-            }
 
-            foreach (string t in newDependees)
-            {
-                AddDependency(t, s);
-            }
             //Remove first
             //foreach (string str in newDependees)
             // AdddDependency(str, s)
