@@ -112,6 +112,7 @@ namespace FormulaEvaluator
                 //If token is )
                 if (t.Equals(")"))
                 {
+                 
                     //If + or - is on top of the operatorStack. 
                     if (operatorStack.IsOnTop("+") || operatorStack.IsOnTop("-"))
                     {
@@ -120,6 +121,7 @@ namespace FormulaEvaluator
                         int v = Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
                         valueStack.Push(v);
                     }
+                    
                     //If there is no ( after the calculation, throws an error. 
                     if (!operatorStack.IsOnTop("("))
                     {
@@ -128,6 +130,8 @@ namespace FormulaEvaluator
                     operatorStack.Pop();
 
                     //If / or * is on top of the operatorStack. 
+
+
                     if (operatorStack.IsOnTop("*") || operatorStack.IsOnTop("/"))
                     {
                         //Performs the same calculation as above.
@@ -178,9 +182,9 @@ namespace FormulaEvaluator
             }
             else if (operatorStack.Count == 1)
             {
-                if (operatorStack.IsOnTop("+") || operatorStack.IsOnTop("-"))
+                if ((operatorStack.IsOnTop("+") || operatorStack.IsOnTop("-")) && valueStack.Count==2)
                 {
-                    stackThrowLessThan2(valueStack.Count);
+                    //stackThrowLessThan2(valueStack.Count);
                     return Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
                 }
 
@@ -275,6 +279,8 @@ namespace FormulaEvaluator
                 throw new ArgumentException("Invalid expression.");
             }
         }
+
+      
 
 
     }
