@@ -137,7 +137,7 @@ namespace SpreadsheetUtilities
             {
                 return new List<string>();
             }
-            return dependentsList;
+            return  new List<String>(dependentsList);
         }
 
 
@@ -204,6 +204,16 @@ namespace SpreadsheetUtilities
             // Remove 
             //foreach (string str in newDependets)
             // AdddDependency(s, str)
+            foreach (string dependents in GetDependents(s))
+            {
+                RemoveDependency(s, dependents);
+            }
+
+            foreach (string t in newDependents)
+            {
+                AddDependency(s, t);
+            }
+
 
         }
 
@@ -214,6 +224,15 @@ namespace SpreadsheetUtilities
         /// </summary>
         public void ReplaceDependees(string s, IEnumerable<string> newDependees)
         {
+            foreach (string dependees in GetDependees(s))
+            {
+                RemoveDependency(dependees,s );
+            }
+
+            foreach (string t in newDependees)
+            {
+                AddDependency(t, s);
+            }
             //Remove first
             //foreach (string str in newDependees)
             // AdddDependency(str, s)
