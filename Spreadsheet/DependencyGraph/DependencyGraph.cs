@@ -44,9 +44,10 @@ namespace SpreadsheetUtilities
         // some functiosn dictiaonry 
 
         //private List<Dictionary<string, List<string>>> dg;
-        private Dictionary<string, List<string>> dependents;
-        private Dictionary<string, List<string>> dependees;
+        private Dictionary<string, HashSet<string>> dependents;
+        private Dictionary<string, HashSet<string>> dependees;
         private int numberOfPair;
+        private HashSet<string> listOfString;
 
         /// <summary>
         /// Creates an empty DependencyGraph.
@@ -54,8 +55,9 @@ namespace SpreadsheetUtilities
         public DependencyGraph()
         {
             //dg = new List<Dictionary<string, List<string>>>();
-            dependents = new Dictionary<string, List<string>>();
-            dependees = new Dictionary<string, List<string>>();
+            dependents = new Dictionary<string, HashSet<string>>();
+            dependees = new Dictionary<string, HashSet<string>>();
+            listOfString = new HashSet<string>();
             this.numberOfPair = 0;
         }
 
@@ -103,7 +105,7 @@ namespace SpreadsheetUtilities
         /// </summary>
         public bool HasDependees(string s)
         {
- 
+
             if (dependees[s].Count == 0)
             {
                 return false;
@@ -131,7 +133,7 @@ namespace SpreadsheetUtilities
         /// </summary>
         public IEnumerable<string> GetDependees(string s)
         {
-           
+
             if (dependees[s].Count == 0)
             {
                 return new List<string>();
@@ -152,32 +154,66 @@ namespace SpreadsheetUtilities
         /// <param name="t"> t cannot be evaluated until s is</param>        /// 
         public void AddDependency(string s, string t)
         {
-       
-             //use set ( ordered, reverse relationship is fine. HashSet)
 
-            if (!dependents.ContainsKey(s)) // Checking for the key 
+
+
+            if (!dependents.ContainsKey(s) && !dependees.ContainsKey(t))
             {
-                //If do not have any depedents, creates a new list
-                List<string> newDependents = new List<string>();
+                HashSet<string> newDependents = new HashSet<string>();
                 newDependents.Add(t);
                 dependents.Add(s, newDependents);
-            }
-            else
-            {
-                dependents[s].Add(t);
-            }
 
-            if (!dependees.ContainsKey(t))
-            {
-                List<string> newDependees = new List<string>();
+                HashSet<string> newDependees = new HashSet<string>();
                 newDependees.Add(s);
                 dependees.Add(t, newDependees);
+
+                this.numberOfPair++;
+                return;
+
             }
-            else
+            
+            if (dependents.ContainsKey(s) && dependees.ContainsKey(t))
+            {
+                int num1 = dependents[s].Count;
+                int num2 = dependees[t].Count;
+
+                dependents[s].Add(t);
+                dependees[t].Add(s);
+                
+                if(num1 != dependents[s].Count || num2 != dependees[t].Count)
+                {
+                    this.numberOfPair++;
+                    return;
+                }
+            }
+
+            if (dependents.ContainsKey(s) && !dependees.ContainsKey(t))
+            {
+                dependents[s].Add(t);
+
+                HashSet<string> newDependees = new HashSet<string>();
+                newDependees.Add(s);
+                dependees.Add(t, newDependees);
+                this.numberOfPair++;
+                return;
+
+
+            }
+
+
+            if (!dependents.ContainsKey(s) && dependees.ContainsKey(t))
             {
                 dependees[t].Add(s);
+            
+
+                HashSet<string> newDependents = new HashSet<string>();
+                newDependents.Add(t);
+                dependents.Add(s, newDependents);
+                this.numberOfPair++;
+                return;
+
+
             }
-            this.numberOfPair++;
 
         }
 
@@ -225,6 +261,7 @@ namespace SpreadsheetUtilities
             //foreach (string str in newDependees)
             // AdddDependency(str, s)
         }
+
 
     }
 
