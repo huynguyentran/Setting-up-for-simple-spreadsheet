@@ -92,7 +92,7 @@ namespace SpreadsheetUtilities
         /// </summary>
         public bool HasDependents(string s)
         {
-            if (dependents[s].Count == 0)
+            if (!dependents.ContainsKey(s) || dependents[s].Count == 0 )
             {
                 return false;
             }
@@ -106,7 +106,7 @@ namespace SpreadsheetUtilities
         public bool HasDependees(string s)
         {
 
-            if (dependees[s].Count == 0)
+            if (!dependees.ContainsKey(s) || dependees[s].Count == 0)
             {
                 return false;
             }
@@ -120,7 +120,7 @@ namespace SpreadsheetUtilities
         public IEnumerable<string> GetDependents(string s)
         {
 
-            if (dependents[s].Count == 0)
+            if (!dependents.ContainsKey(s) || dependents[s].Count == 0 )
             {
                 return new List<string>();
             }
@@ -134,7 +134,7 @@ namespace SpreadsheetUtilities
         public IEnumerable<string> GetDependees(string s)
         {
 
-            if (dependees[s].Count == 0)
+            if (!dependees.ContainsKey(s) || dependees[s].Count == 0 )
             {
                 return new List<string>();
             }
@@ -240,6 +240,18 @@ namespace SpreadsheetUtilities
         //use remove then add
 
         {
+            if (HasDependents(s))
+            {
+                foreach (string t in new HashSet<string>(dependents[s]))
+                {
+                    RemoveDependency(s, t);
+                }
+            }
+ 
+            foreach (string t in newDependents)
+            {
+                AddDependency(s, t);
+            }
             //for each depenencee in s 
             // Remove 
             //foreach (string str in newDependets)
@@ -256,6 +268,18 @@ namespace SpreadsheetUtilities
         /// </summary>
         public void ReplaceDependees(string s, IEnumerable<string> newDependees)
         {
+            if (HasDependees(s))
+            {
+                foreach (string t in new HashSet<string>(dependees[s]))
+                {
+                    RemoveDependency(t, s);
+                }
+            }
+          
+            foreach (string t in newDependees)
+            {
+                AddDependency(t, s);
+            }
 
             //Remove first
             //foreach (string str in newDependees)
