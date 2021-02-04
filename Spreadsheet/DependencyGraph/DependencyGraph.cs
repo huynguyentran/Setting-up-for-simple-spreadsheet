@@ -90,8 +90,7 @@ namespace SpreadsheetUtilities
         /// </summary>
         public bool HasDependents(string s)
         {
-            List<string> dependentsList = dependents[s];
-            if (dependentsList.Count == 0)
+            if (dependents[s].Count == 0)
             {
                 return false;
             }
@@ -104,8 +103,8 @@ namespace SpreadsheetUtilities
         /// </summary>
         public bool HasDependees(string s)
         {
-            List<string> dependeesList = dependees[s];
-            if (dependeesList.Count == 0)
+ 
+            if (dependees[s].Count == 0)
             {
                 return false;
             }
@@ -132,12 +131,12 @@ namespace SpreadsheetUtilities
         /// </summary>
         public IEnumerable<string> GetDependees(string s)
         {
-            List<string> dependentsList = dependees[s];
-            if (dependentsList.Count == 0)
+           
+            if (dependees[s].Count == 0)
             {
                 return new List<string>();
             }
-            return new List<String>(dependentsList);
+            return new List<String>(dependees[s]);
         }
 
 
