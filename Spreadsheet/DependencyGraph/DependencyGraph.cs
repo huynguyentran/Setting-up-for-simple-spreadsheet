@@ -46,8 +46,7 @@ namespace SpreadsheetUtilities
         //private List<Dictionary<string, List<string>>> dg;
         private Dictionary<string, HashSet<string>> dependents;
         private Dictionary<string, HashSet<string>> dependees;
-        private int numberOfPair;
-        private HashSet<string> listOfString;
+        private int numOfPairs;
 
         /// <summary>
         /// Creates an empty DependencyGraph.
@@ -57,8 +56,7 @@ namespace SpreadsheetUtilities
             //dg = new List<Dictionary<string, List<string>>>();
             dependents = new Dictionary<string, HashSet<string>>();
             dependees = new Dictionary<string, HashSet<string>>();
-            listOfString = new HashSet<string>();
-            this.numberOfPair = 0;
+            this.numOfPairs = 0;
         }
 
 
@@ -69,11 +67,11 @@ namespace SpreadsheetUtilities
         {
             get
             {
-                return this.numberOfPair;
+                return this.numOfPairs;
             }
         }
 
-
+       
         /// <summary>
         /// The size of dependees(s).
         /// This property is an example of an indexer.  If dg is a DependencyGraph, you would
@@ -83,7 +81,13 @@ namespace SpreadsheetUtilities
         /// </summary>
         public int this[string s]
         {
-            get { return dependees[s].Count; }
+            get { 
+                if (!dependees.ContainsKey(s))
+                {
+                    return 0;
+                }
+                return dependees[s].Count; 
+            }
         }
 
 
@@ -92,7 +96,7 @@ namespace SpreadsheetUtilities
         /// </summary>
         public bool HasDependents(string s)
         {
-            if (!dependents.ContainsKey(s) || dependents[s].Count == 0 )
+            if (checkDependents(s))
             {
                 return false;
             }
@@ -106,7 +110,7 @@ namespace SpreadsheetUtilities
         public bool HasDependees(string s)
         {
 
-            if (!dependees.ContainsKey(s) || dependees[s].Count == 0)
+            if (checkDependees(s))
             {
                 return false;
             }
@@ -120,7 +124,7 @@ namespace SpreadsheetUtilities
         public IEnumerable<string> GetDependents(string s)
         {
 
-            if (!dependents.ContainsKey(s) || dependents[s].Count == 0 )
+            if (!HasDependents(s))
             {
                 return new List<string>();
             }
@@ -134,7 +138,7 @@ namespace SpreadsheetUtilities
         public IEnumerable<string> GetDependees(string s)
         {
 
-            if (!dependees.ContainsKey(s) || dependees[s].Count == 0 )
+            if (!HasDependees(s))
             {
                 return new List<string>();
             }
@@ -142,74 +146,78 @@ namespace SpreadsheetUtilities
         }
 
 
+
         /// <summary>
         /// <para>Adds the ordered pair (s,t), if it doesn't exist</para>
         /// 
         /// <para>This should be thought of as:</para>   
         /// 
-        ///   t depends on s
+        ///   t depends on s 
         ///
+        ///   
+        /// 
         /// </summary>
         /// <param name="s"> s must be evaluated first. T depends on S</param>
         /// <param name="t"> t cannot be evaluated until s is</param>        /// 
         public void AddDependency(string s, string t)
         {
-
-
-
             if (!dependents.ContainsKey(s) && !dependees.ContainsKey(t))
             {
-                HashSet<string> newDependents = new HashSet<string>();
-                newDependents.Add(t);
-                dependents.Add(s, newDependents);
+                createNewDependents(s, t);
+                //HashSet<string> newDependents = new HashSet<string>();
+                //newDependents.Add(t);
+                //dependents.Add(s, newDependents);
 
-                HashSet<string> newDependees = new HashSet<string>();
-                newDependees.Add(s);
-                dependees.Add(t, newDependees);
+                createNewDependees(s, t);
+                //HashSet<string> newDependees = new HashSet<string>();
+                //newDependees.Add(s);
+                //dependees.Add(t, newDependees);
 
-                this.numberOfPair++;
+                this.numOfPairs++;
                 return;
 
             }
             
             if (dependents.ContainsKey(s) && dependees.ContainsKey(t))
             {
-                int num1 = dependents[s].Count;
-                int num2 = dependees[t].Count;
-
-                dependents[s].Add(t);
-                dependees[t].Add(s);
+              // 2 cases/ handles depdents and dependee seperate. 
+               // dependents[s].Add(t);
+               // dependees[t].Add(s);
                 
-                if(num1 != dependents[s].Count || num2 != dependees[t].Count)
+                //Ask TA to help with this
+                if(dependents[s].Add(t) || dependees[t].Add(s))
                 {
-                    this.numberOfPair++;
+                    dependents[s].Add(t);
+                    dependees[t].Add(s);
+                    this.numOfPairs++;
                     return;
                 }
+                return;
             }
 
             if (dependents.ContainsKey(s) && !dependees.ContainsKey(t))
             {
                 dependents[s].Add(t);
-
-                HashSet<string> newDependees = new HashSet<string>();
-                newDependees.Add(s);
-                dependees.Add(t, newDependees);
-                this.numberOfPair++;
+                createNewDependees(s, t);
+                //HashSet<string> newDependees = new HashSet<string>();
+                //newDependees.Add(s);
+                //dependees.Add(t, newDependees);
+                this.numOfPairs++;
                 return;
 
 
             }
 
-
-            if (!dependents.ContainsKey(s) && dependees.ContainsKey(t))
+            //Ask TA about this, the condition in side run 
+            if (!(dependents.ContainsKey(s)) && dependees.ContainsKey(t))
             {
                 dependees[t].Add(s);
-            
+                createNewDependents(s, t);
 
-                HashSet<string> newDependents = new HashSet<string>();
-                newDependents.Add(t);
-                dependents.Add(s, newDependents);
-                this.numberOfPair++;
+                //HashSet<string> newDependents = new HashSet<string>();
+                //newDependents.Add(t);
+                //dependents.Add(s, newDependents);
+                this.numOfPairs++;
                 return;
 
 
@@ -225,10 +233,24 @@ namespace SpreadsheetUtilities
         /// <param name="t"></param>
         public void RemoveDependency(string s, string t)
         {
-            dependees[t].Remove(s);
-            dependents[s].Remove(t);
-            this.numberOfPair--;
             //If containsKey("s")
+            //if (dependees.ContainsKey(t) && dependents.ContainsKey(s))
+            //{
+            if (HasDependents(s) && HasDependees(t))
+            {
+                dependees[t].Remove(s);
+                dependents[s].Remove(t);
+                this.numOfPairs--;
+            }
+          
+            //}
+            //else
+            //{
+            //    return;
+            //}
+         
+
+
         }
 
 
@@ -242,6 +264,7 @@ namespace SpreadsheetUtilities
         {
             if (HasDependents(s))
             {
+                //This works because if we modify the original data structure, it gets confused. 
                 foreach (string t in new HashSet<string>(dependents[s]))
                 {
                     RemoveDependency(s, t);
@@ -284,6 +307,38 @@ namespace SpreadsheetUtilities
             //Remove first
             //foreach (string str in newDependees)
             // AdddDependency(str, s)
+        }
+
+        private bool checkDependents(string s)
+        {
+          if (!dependents.ContainsKey(s) || dependents[s].Count == 0)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private bool checkDependees(string s)
+        {
+            if (!dependees.ContainsKey(s) || dependees[s].Count == 0)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private void createNewDependents(string s, string t)
+        {
+            HashSet<string> newDependents = new HashSet<string>();
+            newDependents.Add(t);
+            dependents.Add(s, newDependents);
+        }
+
+        private void createNewDependees(string s, string t)
+        {
+            HashSet<string> newDependees = new HashSet<string>();
+            newDependees.Add(s);
+            dependees.Add(t, newDependees);
         }
 
 

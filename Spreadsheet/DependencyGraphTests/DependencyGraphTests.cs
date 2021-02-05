@@ -261,5 +261,103 @@ namespace DevelopmentTests
             }
         }
 
+
+        [TestMethod()]
+        public void _SimpleAddTest()
+        {
+            DependencyGraph dg = new DependencyGraph();
+            dg.AddDependency("a", "b");
+            dg.AddDependency("b", "c");
+            Assert.AreEqual(2, dg.Size);
+        }
+
+        [TestMethod()]
+        public void _SizeOfDependees()
+        {
+            DependencyGraph dg = new DependencyGraph();
+            dg.AddDependency("b", "a");
+            dg.AddDependency("c", "a");
+            dg.AddDependency("d", "a");
+            dg.AddDependency("b", "a");
+            Assert.AreEqual(3, dg.Size);
+            Assert.AreEqual(3, dg["a"]);
+            Assert.AreEqual(0, dg["b"]);
+        }
+
+        [TestMethod()]
+        public void _HasDependents()
+        {
+            DependencyGraph dg = new DependencyGraph();
+            dg.AddDependency("a", "b");
+            Assert.IsTrue(dg.HasDependents("a"));
+            Assert.IsFalse(dg.HasDependents("b"));
+            Assert.IsFalse(dg.HasDependents("c"));
+        }
+
+
+        [TestMethod()]
+        public void _HasDependees()
+        {
+            DependencyGraph dg = new DependencyGraph();
+            dg.AddDependency("a", "b");
+            Assert.IsTrue(dg.HasDependees("b"));
+            Assert.IsFalse(dg.HasDependees("a"));
+            Assert.IsFalse(dg.HasDependees("c"));
+        }
+
+        [TestMethod()]
+        public void _CheckDependency()
+        {
+            DependencyGraph dg = new DependencyGraph();
+            dg.AddDependency("a", "b");
+            dg.AddDependency("b", "a");
+            Assert.AreEqual(2, dg.Size);
+            Assert.IsTrue(dg.HasDependents("a"));
+            Assert.IsTrue(dg.HasDependents("b"));
+            Assert.IsTrue(dg.HasDependees("a"));
+            Assert.IsTrue(dg.HasDependees("b"));
+
+            // How to make test for GetDependents, Get Dependees
+
+
+        }
+
+        [TestMethod()]
+        public void _CheckAdd2()
+        {
+            DependencyGraph dg = new DependencyGraph();
+            dg.AddDependency("a", "b");
+            dg.AddDependency("a", "c");
+            dg.AddDependency("a", "b");
+            dg.AddDependency("c", "b");
+            Assert.AreEqual(3, dg.Size);
+            dg.RemoveDependency("a", "b");
+            dg.RemoveDependency("z", "b");
+            Assert.AreEqual(2, dg.Size);
+        }
+
+        [TestMethod()]
+        public void _CheckAdd3()
+        {
+            DependencyGraph dg = new DependencyGraph();
+            dg.AddDependency("a", "b");
+            dg.AddDependency("c", "d");
+            Assert.AreEqual(2, dg.Size);
+            dg.AddDependency("a", "c");
+            Assert.AreEqual(3, dg.Size);
+            dg.AddDependency("z", "d");
+            Assert.AreEqual(4, dg.Size);
+        }
+
+        [TestMethod()]
+        public void _CheckAdd4()
+        {
+            DependencyGraph dg = new DependencyGraph();
+            dg.AddDependency("a", "b");
+            dg.AddDependency("c", "b");
+            Assert.AreEqual(2, dg.Size);
+        }
+
+
     }
 }
