@@ -323,7 +323,7 @@ namespace DevelopmentTests
         }
 
         [TestMethod()]
-        public void _CheckAdd2()
+        public void _CheckAddToSeeRunAllCodeLines2()
         {
             DependencyGraph dg = new DependencyGraph();
             dg.AddDependency("a", "b");
@@ -337,7 +337,7 @@ namespace DevelopmentTests
         }
 
         [TestMethod()]
-        public void _CheckAdd3()
+        public void _CheckAddToSeeRunAllCodeLines3()
         {
             DependencyGraph dg = new DependencyGraph();
             dg.AddDependency("a", "b");
@@ -350,13 +350,39 @@ namespace DevelopmentTests
         }
 
         [TestMethod()]
-        public void _CheckAdd4()
+        public void _CheckAddToSeeRunAllCodeLines4()
         {
             DependencyGraph dg = new DependencyGraph();
             dg.AddDependency("a", "b");
             dg.AddDependency("c", "b");
             Assert.AreEqual(2, dg.Size);
         }
+
+        [TestMethod()]
+        public void LoopDependency()
+        {
+            DependencyGraph t = new DependencyGraph();
+            t.AddDependency("a", "b");
+            t.AddDependency("b", "a");
+            Assert.AreEqual(2, t.Size);
+            IEnumerator<string> e1 = t.GetDependents("a").GetEnumerator();
+            IEnumerator<string> e2 = t.GetDependees("a").GetEnumerator();
+            Assert.IsTrue(e1.MoveNext());
+            Assert.IsTrue(e2.MoveNext());
+            Assert.AreEqual("b", e1.Current);
+            Assert.AreEqual("b", e1.Current);
+            Assert.IsFalse(e1.MoveNext());
+            Assert.IsFalse(e2.MoveNext());
+            IEnumerator<string> e3 = t.GetDependents("b").GetEnumerator();
+            IEnumerator<string> e4 = t.GetDependees("b").GetEnumerator();
+            Assert.IsTrue(e3.MoveNext());
+            Assert.IsTrue(e4.MoveNext());
+            Assert.AreEqual("a", e3.Current);
+            Assert.AreEqual("a", e4.Current);
+            Assert.IsFalse(e3.MoveNext());
+            Assert.IsFalse(e4.MoveNext());
+        }
+
 
 
     }

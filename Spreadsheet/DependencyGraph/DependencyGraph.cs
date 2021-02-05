@@ -209,7 +209,7 @@ namespace SpreadsheetUtilities
             }
 
             //Ask TA about this, the condition in side run 
-            if (!(dependents.ContainsKey(s)) && dependees.ContainsKey(t))
+            if (!dependents.ContainsKey(s) && dependees.ContainsKey(t))
             {
                 dependees[t].Add(s);
                 createNewDependents(s, t);
@@ -222,7 +222,7 @@ namespace SpreadsheetUtilities
 
 
             }
-
+            
         }
 
 
