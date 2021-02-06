@@ -126,10 +126,10 @@ namespace SpreadsheetUtilities
 
             if (!HasDependents(s))
             {
-                return new List<string>();
+                return new HashSet<string>();
             }
             //This is temporary.
-            return new List<string>(dependents[s]);
+            return new HashSet<string>(dependents[s]);
         }
 
         /// <summary>
@@ -140,9 +140,9 @@ namespace SpreadsheetUtilities
 
             if (!HasDependees(s))
             {
-                return new List<string>();
+                return new HashSet<string>();
             }
-            return new List<String>(dependees[s]);
+            return new HashSet<String>(dependees[s]);
         }
 
 
@@ -208,19 +208,13 @@ namespace SpreadsheetUtilities
 
             }
 
-            //Ask TA about this, the condition in side run 
+            //Ask TA about this, the condition inside run 
             if (!dependents.ContainsKey(s) && dependees.ContainsKey(t))
             {
                 dependees[t].Add(s);
                 createNewDependents(s, t);
-
-                //HashSet<string> newDependents = new HashSet<string>();
-                //newDependents.Add(t);
-                //dependents.Add(s, newDependents);
                 this.numOfPairs++;
                 return;
-
-
             }
             
         }
@@ -233,24 +227,13 @@ namespace SpreadsheetUtilities
         /// <param name="t"></param>
         public void RemoveDependency(string s, string t)
         {
-            //If containsKey("s")
-            //if (dependees.ContainsKey(t) && dependents.ContainsKey(s))
-            //{
+
             if (HasDependents(s) && HasDependees(t))
             {
                 dependees[t].Remove(s);
                 dependents[s].Remove(t);
                 this.numOfPairs--;
             }
-          
-            //}
-            //else
-            //{
-            //    return;
-            //}
-         
-
-
         }
 
 
@@ -275,13 +258,6 @@ namespace SpreadsheetUtilities
             {
                 AddDependency(s, t);
             }
-            //for each depenencee in s 
-            // Remove 
-            //foreach (string str in newDependets)
-            // AdddDependency(s, str)
-
-
-
         }
 
 

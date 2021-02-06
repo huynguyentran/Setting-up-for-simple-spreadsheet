@@ -279,7 +279,8 @@ namespace DevelopmentTests
             dg.AddDependency("c", "a");
             dg.AddDependency("d", "a");
             dg.AddDependency("b", "a");
-            Assert.AreEqual(3, dg.Size);
+            dg.AddDependency("a", "z");
+            Assert.AreEqual(4, dg.Size);
             Assert.AreEqual(3, dg["a"]);
             Assert.AreEqual(0, dg["b"]);
         }
@@ -316,14 +317,10 @@ namespace DevelopmentTests
             Assert.IsTrue(dg.HasDependents("b"));
             Assert.IsTrue(dg.HasDependees("a"));
             Assert.IsTrue(dg.HasDependees("b"));
-
-            // How to make test for GetDependents, Get Dependees
-
-
         }
 
         [TestMethod()]
-        public void _CheckAddToSeeRunAllCodeLines2()
+        public void _CheckAddToSeeRunAllCodeLines()
         {
             DependencyGraph dg = new DependencyGraph();
             dg.AddDependency("a", "b");
@@ -337,7 +334,7 @@ namespace DevelopmentTests
         }
 
         [TestMethod()]
-        public void _CheckAddToSeeRunAllCodeLines3()
+        public void _CheckAddToSeeRunAllCodeLines2()
         {
             DependencyGraph dg = new DependencyGraph();
             dg.AddDependency("a", "b");
@@ -350,7 +347,7 @@ namespace DevelopmentTests
         }
 
         [TestMethod()]
-        public void _CheckAddToSeeRunAllCodeLines4()
+        public void _CheckAddToSeeRunAllCodeLines3()
         {
             DependencyGraph dg = new DependencyGraph();
             dg.AddDependency("a", "b");
@@ -383,6 +380,152 @@ namespace DevelopmentTests
             Assert.IsFalse(e4.MoveNext());
         }
 
+        [TestMethod()]
+        public void _RemoveDependency()
+        {
+            DependencyGraph t = new DependencyGraph();
+            t.AddDependency("a", "b");
+            t.AddDependency("a", "c");
+            Assert.AreEqual(2, t.Size);
+            t.RemoveDependency("b", "a");
+            Assert.AreEqual(2, t.Size);
+            Assert.IsTrue(t.HasDependents("a"));
+            Assert.IsTrue(t.HasDependees("b"));
+            t.RemoveDependency("a", "c");
+            Assert.IsFalse(t.HasDependees("c"));
+
+        }
+
+        [TestMethod()]
+        public void _GetDependentsTest()
+        {
+            DependencyGraph dg = new DependencyGraph();
+            for (int i = 0; i < 10; i++)
+            {
+                dg.AddDependency("a", i.ToString());
+            }
+            Assert.AreEqual(10, dg.Size);
+            IEnumerator<string> e1 = dg.GetDependents("a").GetEnumerator();
+            for (int i = 0; i < 10; i++)
+            {
+                Assert.IsTrue(e1.MoveNext());
+                Assert.AreEqual(i.ToString(), e1.Current);
+            }
+            dg.AddDependency("a", "9");
+            Assert.AreNotEqual(11, dg.Size);
+            Assert.IsFalse(e1.MoveNext());
+        }
+
+        [TestMethod()]
+        public void _GetDependeesTest()
+        {
+            DependencyGraph dg = new DependencyGraph();
+            for (int i = 0; i < 10; i++)
+            {
+                dg.AddDependency(i.ToString(),"a");
+            }
+            Assert.AreEqual(10, dg.Size);
+            IEnumerator<string> e1 = dg.GetDependees("a").GetEnumerator();
+            for (int i = 0; i < 10; i++)
+            {
+                Assert.IsTrue(e1.MoveNext());
+                Assert.AreEqual(i.ToString(), e1.Current);
+            }
+            dg.AddDependency( "9", "a");
+            Assert.AreNotEqual(11, dg.Size);
+            Assert.IsFalse(e1.MoveNext());
+        }
+
+        [TestMethod()]
+        public void _ReplacementDependentsTest()
+        {
+            DependencyGraph dg = new DependencyGraph();
+            dg.AddDependency("b", "d");
+            dg.ReplaceDependents("b", new HashSet<string>());
+            Assert.IsFalse(dg.HasDependents("b"));
+            dg.AddDependency("b", "c");
+            Assert.IsTrue(dg.HasDependents("b"));
+            IEnumerator<string> e = dg.GetDependents("b").GetEnumerator();
+            Assert.IsTrue(e.MoveNext());
+            String s1 = e.Current;
+            Assert.IsFalse(e.MoveNext());
+            Assert.IsTrue(s1 == "c");
+
+            dg.ReplaceDependents("b", new HashSet<string> { "d", "e", "f", "g" });
+            IEnumerator<string> e2 = dg.GetDependents("b").GetEnumerator();
+            Assert.IsTrue(e2.MoveNext());
+            String s2 = e2.Current;
+            Assert.IsTrue(e2.MoveNext());
+            String s3 = e2.Current;
+            Assert.IsTrue(e2.MoveNext());
+            String s4 = e2.Current;
+            Assert.IsTrue(e2.MoveNext());
+            String s5 = e2.Current;
+            Assert.IsFalse(e2.MoveNext());
+            Assert.IsTrue(s2 == "d" && s3 == "e" && s4 == "f" && s5 == "g");
+
+            dg.AddDependency("b", "d");
+            Assert.IsFalse(e2.MoveNext());
+
+        }
+
+        [TestMethod()]
+        public void _ReplacementDependeesTest()
+        {
+            DependencyGraph dg = new DependencyGraph();
+            dg.AddDependency("a", "b");
+            dg.AddDependency("b", "c");
+            dg.ReplaceDependees("b", new HashSet<string>());
+            Assert.IsTrue(dg.HasDependents("b"));
+            Assert.IsFalse(dg.HasDependees("b"));
+            dg.AddDependency("1", "b");
+            Assert.IsTrue(dg.HasDependees("b"));
+            IEnumerator<string> e = dg.GetDependees("b").GetEnumerator();
+            Assert.IsTrue(e.MoveNext());
+            String s1 = e.Current;
+            Assert.IsFalse(e.MoveNext());
+            Assert.IsTrue(s1 == "1");
+
+            dg.ReplaceDependees("b", new HashSet<string> { "2", "3", "4", "5" });
+            IEnumerator<string> e2 = dg.GetDependees("b").GetEnumerator();
+            Assert.IsTrue(e2.MoveNext());
+            String s2 = e2.Current;
+            Assert.IsTrue(e2.MoveNext());
+            String s3 = e2.Current;
+            Assert.IsTrue(e2.MoveNext());
+            String s4 = e2.Current;
+            Assert.IsTrue(e2.MoveNext());
+            String s5 = e2.Current;
+            Assert.IsFalse(e2.MoveNext());
+            Assert.IsTrue(s2 == "2" && s3 == "3" && s4 == "4" && s5 == "5");
+
+        }
+
+        [TestMethod()]
+        public void _DependentOnItself()
+        {
+            DependencyGraph dg = new DependencyGraph();
+            dg.AddDependency("b", "b");
+            IEnumerator<string> e1 = dg.GetDependents("b").GetEnumerator();
+            IEnumerator<string> e2 = dg.GetDependees("b").GetEnumerator();
+            Assert.IsTrue(e1.MoveNext());
+            String s1 = e1.Current;
+            Assert.IsFalse(e1.MoveNext());
+            Assert.IsTrue(e2.MoveNext());
+            String s2 = e2.Current;
+            Assert.IsFalse(e2.MoveNext());
+            Assert.AreEqual(s1, s2);
+            Assert.IsTrue(dg.HasDependents("b"));
+            Assert.IsTrue(dg.HasDependees("b"));
+        }
+
+        [TestMethod()]
+        public void _ListReturn()
+        {
+            DependencyGraph t = new DependencyGraph();
+            t.AddDependency("a", "b");
+            Assert.IsTrue(t.GetDependents("a").GetEnumerator().MoveNext());
+        }
 
 
     }
