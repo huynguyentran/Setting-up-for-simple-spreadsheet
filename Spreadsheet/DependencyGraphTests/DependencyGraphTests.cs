@@ -261,7 +261,9 @@ namespace DevelopmentTests
             }
         }
 
-
+        /// <summary>
+        /// A test to see if the add method and size method work properly.
+        /// </summary>
         [TestMethod()]
         public void _SimpleAddTest()
         {
@@ -271,6 +273,9 @@ namespace DevelopmentTests
             Assert.AreEqual(2, dg.Size);
         }
 
+        /// <summary>
+        /// A test to see if the size of dependees.
+        /// </summary>
         [TestMethod()]
         public void _SizeOfDependees()
         {
@@ -278,6 +283,7 @@ namespace DevelopmentTests
             dg.AddDependency("b", "a");
             dg.AddDependency("c", "a");
             dg.AddDependency("d", "a");
+            //Repeat should not increase the dependees list. 
             dg.AddDependency("b", "a");
             dg.AddDependency("a", "z");
             Assert.AreEqual(4, dg.Size);
@@ -285,6 +291,9 @@ namespace DevelopmentTests
             Assert.AreEqual(0, dg["b"]);
         }
 
+        /// <summary>
+        /// A test to check HasDependents method. 
+        /// </summary>
         [TestMethod()]
         public void _HasDependents()
         {
@@ -295,7 +304,9 @@ namespace DevelopmentTests
             Assert.IsFalse(dg.HasDependents("c"));
         }
 
-
+        /// <summary>
+        /// A test to check HasDependees method. 
+        /// </summary>
         [TestMethod()]
         public void _HasDependees()
         {
@@ -306,6 +317,9 @@ namespace DevelopmentTests
             Assert.IsFalse(dg.HasDependees("c"));
         }
 
+        /// <summary>
+        /// A test to check cycle dependency.
+        /// </summary>
         [TestMethod()]
         public void _CheckDependency()
         {
@@ -317,8 +331,13 @@ namespace DevelopmentTests
             Assert.IsTrue(dg.HasDependents("b"));
             Assert.IsTrue(dg.HasDependees("a"));
             Assert.IsTrue(dg.HasDependees("b"));
+            Assert.AreEqual(1, dg["a"]);
+            Assert.AreEqual(1, dg["b"]);
         }
 
+        /// <summary>
+        /// A series of tests to check all possible AddDependency
+        /// </summary>
         [TestMethod()]
         public void _CheckAddToSeeRunAllCodeLines()
         {
@@ -333,6 +352,9 @@ namespace DevelopmentTests
             Assert.AreEqual(2, dg.Size);
         }
 
+        /// <summary>
+        /// A series of tests to check all possible AddDependency
+        /// </summary>
         [TestMethod()]
         public void _CheckAddToSeeRunAllCodeLines2()
         {
@@ -346,6 +368,9 @@ namespace DevelopmentTests
             Assert.AreEqual(4, dg.Size);
         }
 
+        /// <summary>
+        /// A series of tests to check all possible AddDependency
+        /// </summary>
         [TestMethod()]
         public void _CheckAddToSeeRunAllCodeLines3()
         {
@@ -356,6 +381,9 @@ namespace DevelopmentTests
 
         }
 
+        /// <summary>
+        /// A series of tests to check all possible AddDependency
+        /// </summary>
         [TestMethod()]
         public void _CheckAddToSeeRunAllCodeLines4()
         {
@@ -366,6 +394,9 @@ namespace DevelopmentTests
 
         }
 
+        /// <summary>
+        /// A more in depth test to check a cycle dependency.
+        /// </summary>
         [TestMethod()]
         public void LoopDependency()
         {
@@ -391,6 +422,9 @@ namespace DevelopmentTests
             Assert.IsFalse(e4.MoveNext());
         }
 
+        /// <summary>
+        /// A test to check RemoveDependency method.
+        /// </summary>
         [TestMethod()]
         public void _RemoveDependency()
         {
@@ -402,11 +436,16 @@ namespace DevelopmentTests
             Assert.AreEqual(2, t.Size);
             Assert.IsTrue(t.HasDependents("a"));
             Assert.IsTrue(t.HasDependees("b"));
+            Assert.IsTrue(t.HasDependees("c"));
             t.RemoveDependency("a", "c");
             Assert.IsFalse(t.HasDependees("c"));
 
         }
 
+        /// <summary>
+        /// A test to check GetDependents method to see if
+        /// it returns the correct list.
+        /// </summary>
         [TestMethod()]
         public void _GetDependentsTest()
         {
@@ -427,6 +466,10 @@ namespace DevelopmentTests
             Assert.IsFalse(e1.MoveNext());
         }
 
+        /// <summary>
+        /// A test to check GetDependees method to see if
+        /// it returns the correct list.
+        /// </summary>
         [TestMethod()]
         public void _GetDependeesTest()
         {
@@ -447,6 +490,10 @@ namespace DevelopmentTests
             Assert.IsFalse(e1.MoveNext());
         }
 
+
+        /// <summary>
+        /// A test to check ReplaceDependents method.
+        /// </summary>
         [TestMethod()]
         public void _ReplacementDependentsTest()
         {
@@ -480,6 +527,83 @@ namespace DevelopmentTests
 
         }
 
+        /// <summary>
+        /// A test to check a large dependees 
+        /// </summary>
+        [TestMethod()]
+        public void _ReplacementLargeDependeesTest()
+        {
+            DependencyGraph dg = new DependencyGraph();
+            for (int i = 0; i < 1000; i++)
+            {
+                dg.AddDependency(i.ToString(), "a");
+            }
+            Assert.AreEqual(1000, dg["a"]);
+            IEnumerator<string> e = dg.GetDependees("a").GetEnumerator();
+            for (int i = 0; i < 1000; i++)
+            {
+                Assert.IsTrue(e.MoveNext());
+                String s = e.Current;
+                Assert.IsTrue(s == i.ToString());
+            }
+
+            HashSet<string> set = new HashSet<string>();
+            for (int i = 0; i < 1000; i++)
+            {
+                set.Add(i.ToString());
+            }
+
+            dg.ReplaceDependees("b", set);
+            Assert.AreEqual(1000, dg["b"]);
+            IEnumerator<string> e2 = dg.GetDependees("b").GetEnumerator();
+            for (int i = 0; i < 1000; i++)
+            {
+                Assert.IsTrue(e2.MoveNext());
+                String s = e2.Current;
+                Assert.IsTrue(s == i.ToString());
+            }
+        }
+
+        /// <summary>
+        /// A test to check a large dependents 
+        /// </summary>
+        [TestMethod()]
+        public void _ReplacementLargeDependentsTest()
+        {
+            DependencyGraph dg = new DependencyGraph();
+            for (int i = 0; i < 1000; i++)
+            {
+                dg.AddDependency( "a",i.ToString());
+            }
+            Assert.AreEqual(0, dg["a"]);
+            IEnumerator<string> e = dg.GetDependents("a").GetEnumerator();
+            for (int i = 0; i < 1000; i++)
+            {
+                Assert.IsTrue(e.MoveNext());
+                String s = e.Current;
+                Assert.IsTrue(s == i.ToString());
+            }
+
+            HashSet<string> set = new HashSet<string>();
+            for (int i = 0; i < 1000; i++)
+            {
+                set.Add(i.ToString());
+            }
+
+            dg.ReplaceDependents("b", set);
+            Assert.AreEqual(0, dg["b"]);
+            IEnumerator<string> e2 = dg.GetDependents("b").GetEnumerator();
+            for (int i = 0; i < 1000; i++)
+            {
+                Assert.IsTrue(e2.MoveNext());
+                String s = e2.Current;
+                Assert.IsTrue(s == i.ToString());
+            }
+        }
+
+        /// <summary>
+        /// A test to check ReplaceDependees method.
+        /// </summary>
         [TestMethod()]
         public void _ReplacementDependeesTest()
         {
@@ -512,6 +636,9 @@ namespace DevelopmentTests
 
         }
 
+        /// <summary>
+        /// A test to check valid dependency on oneself
+        /// </summary>
         [TestMethod()]
         public void _DependentOnItself()
         {
@@ -530,7 +657,18 @@ namespace DevelopmentTests
             Assert.IsTrue(dg.HasDependees("b"));
         }
 
-
+        /// <summary>
+        /// A test to if remove dependency affect the dependee list in a corret way
+        /// </summary>
+        [TestMethod()]
+        public void _EmptyDependeesList()
+        {
+            DependencyGraph dg = new DependencyGraph();
+            dg.AddDependency("a", "b");
+            dg.RemoveDependency("a", "b");
+            Assert.AreEqual(0, dg["b"]);
+        
+        }
 
     }
 }
