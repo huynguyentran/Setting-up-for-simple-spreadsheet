@@ -159,7 +159,12 @@ namespace SpreadsheetUtilities
         /// <param name="s"> s must be evaluated first. T depends on S</param>
         /// <param name="t"> t cannot be evaluated until s is</param>        /// 
         public void AddDependency(string s, string t)
-        {        
+        {
+            //If either of the element is null, just ignore the method call.
+            if (s == null || t == null){
+                return;
+            }
+
             //Checking if the dependency graph already has s and t
             if (dependents.ContainsKey(s) && dependees.ContainsKey(t))
             {
@@ -196,7 +201,7 @@ namespace SpreadsheetUtilities
 
             }
 
-            //Else, creates both new elements into the dependency graph. 
+            //Else, insert new elements into the dependency graph. 
             createNewDependents(s, t);
             createNewDependees(s, t);
             this.numOfPairs++;

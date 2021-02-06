@@ -670,5 +670,18 @@ namespace DevelopmentTests
         
         }
 
+        /// <summary>
+        /// A test to check null element
+        /// </summary>
+        [TestMethod()]
+        public void _addingNull()
+        {
+            DependencyGraph dg = new DependencyGraph();
+            dg.AddDependency("a", null);
+            dg.AddDependency("b", null);
+            dg.AddDependency(null, null);
+            Assert.AreEqual(0, dg.Size);
+        }
+
     }
 }
