@@ -353,6 +353,17 @@ namespace DevelopmentTests
             dg.AddDependency("a", "b");
             dg.AddDependency("c", "b");
             Assert.AreEqual(2, dg.Size);
+
+        }
+
+        [TestMethod()]
+        public void _CheckAddToSeeRunAllCodeLines4()
+        {
+            DependencyGraph dg = new DependencyGraph();
+            dg.AddDependency("a", "b");
+            dg.AddDependency("c", "b");
+            Assert.AreEqual(2, dg.Size);
+
         }
 
         [TestMethod()]
@@ -519,13 +530,6 @@ namespace DevelopmentTests
             Assert.IsTrue(dg.HasDependees("b"));
         }
 
-        [TestMethod()]
-        public void _ListReturn()
-        {
-            DependencyGraph t = new DependencyGraph();
-            t.AddDependency("a", "b");
-            Assert.IsTrue(t.GetDependents("a").GetEnumerator().MoveNext());
-        }
 
 
     }

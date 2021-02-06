@@ -161,22 +161,7 @@ namespace SpreadsheetUtilities
         /// <param name="t"> t cannot be evaluated until s is</param>        /// 
         public void AddDependency(string s, string t)
         {
-            if (!dependents.ContainsKey(s) && !dependees.ContainsKey(t))
-            {
-                createNewDependents(s, t);
-                //HashSet<string> newDependents = new HashSet<string>();
-                //newDependents.Add(t);
-                //dependents.Add(s, newDependents);
-
-                createNewDependees(s, t);
-                //HashSet<string> newDependees = new HashSet<string>();
-                //newDependees.Add(s);
-                //dependees.Add(t, newDependees);
-
-                this.numOfPairs++;
-                return;
-
-            }
+         
             
             if (dependents.ContainsKey(s) && dependees.ContainsKey(t))
             {
@@ -195,6 +180,15 @@ namespace SpreadsheetUtilities
                 return;
             }
 
+
+            if (dependees.ContainsKey(t) && !dependents.ContainsKey(s))
+            {
+                dependees[t].Add(s);
+                createNewDependents(s, t);
+                this.numOfPairs++;
+                return;
+            }
+
             if (dependents.ContainsKey(s) && !dependees.ContainsKey(t))
             {
                 dependents[s].Add(t);
@@ -208,15 +202,14 @@ namespace SpreadsheetUtilities
 
             }
 
+
+            createNewDependents(s, t);
+            createNewDependees(s, t);
+            this.numOfPairs++;
+            return;
             //Ask TA about this, the condition inside run 
-            if (!dependents.ContainsKey(s) && dependees.ContainsKey(t))
-            {
-                dependees[t].Add(s);
-                createNewDependents(s, t);
-                this.numOfPairs++;
-                return;
-            }
-            
+
+
         }
 
 
