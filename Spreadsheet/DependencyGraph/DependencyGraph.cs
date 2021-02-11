@@ -68,7 +68,7 @@ namespace SpreadsheetUtilities
             }
         }
 
-       
+
         /// <summary>
         /// The size of dependees(s).
         /// This property is an example of an indexer.  If dg is a DependencyGraph, you would
@@ -78,13 +78,14 @@ namespace SpreadsheetUtilities
         /// </summary>
         public int this[string s]
         {
-            get { 
+            get
+            {
                 //If dependees list does not contains s, return 0.
                 if (!dependees.ContainsKey(s))
                 {
                     return 0;
                 }
-                return dependees[s].Count; 
+                return dependees[s].Count;
             }
         }
 
@@ -161,7 +162,8 @@ namespace SpreadsheetUtilities
         public void AddDependency(string s, string t)
         {
             //If either of the element is null, just ignore the method call.
-            if (s == null || t == null){
+            if (s == null || t == null)
+            {
                 return;
             }
 
@@ -169,7 +171,7 @@ namespace SpreadsheetUtilities
             if (dependents.ContainsKey(s) && dependees.ContainsKey(t))
             {
                 //If either the new dependency is unique, increases the number of pairs.Otherwises, return. 
-                if(dependents[s].Add(t) || dependees[t].Add(s))
+                if (dependents[s].Add(t) || dependees[t].Add(s))
                 {
                     dependents[s].Add(t);
                     dependees[t].Add(s);
@@ -240,7 +242,7 @@ namespace SpreadsheetUtilities
                     RemoveDependency(s, t);
                 }
             }
- 
+
             foreach (string t in newDependents)
             {
                 AddDependency(s, t);
@@ -262,7 +264,7 @@ namespace SpreadsheetUtilities
                     RemoveDependency(t, s);
                 }
             }
-          
+
             foreach (string t in newDependees)
             {
                 AddDependency(t, s);
@@ -276,7 +278,7 @@ namespace SpreadsheetUtilities
         /// </summary>
         private bool checkDependents(string s)
         {
-          if (!dependents.ContainsKey(s) || dependents[s].Count == 0)
+            if (!dependents.ContainsKey(s) || dependents[s].Count == 0)
             {
                 return true;
             }

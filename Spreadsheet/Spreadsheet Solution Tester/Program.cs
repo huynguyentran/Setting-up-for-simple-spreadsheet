@@ -61,6 +61,7 @@ namespace Spreadsheet_Solution_Tester
             Console.WriteLine((Evaluator.Evaluate("1+2*5", SimpleLookup)) == 11);
             Console.WriteLine("Test 11:");
             Console.WriteLine((Evaluator.Evaluate("(((1+2)*5)+3)/2", SimpleLookup)) == 9);
+     
 
 
             Console.WriteLine("");
@@ -129,6 +130,16 @@ namespace Spreadsheet_Solution_Tester
             try
             {
                 Console.WriteLine(Evaluator.Evaluate("a111+3", AdvanceLookup));
+                Console.WriteLine("Failed");
+            }
+            catch
+            {
+                Console.WriteLine("Passed");
+            }
+            Console.WriteLine("Test 8:");
+            try
+            {
+                Console.WriteLine(Evaluator.Evaluate("5+7+(5)8",SimpleLookup));
                 Console.WriteLine("Failed");
             }
             catch

@@ -89,8 +89,6 @@ namespace SpreadsheetUtilities
                 throw new FormulaFormatException("There are less than one token in the formula");
             }
 
-
-
             String lpPattern = @"\(";
             String rpPattern = @"\)";
             String opPattern = @"[\+\-*/]";
@@ -101,8 +99,6 @@ namespace SpreadsheetUtilities
             String pattern = String.Format("({0}) | ({1}) | ({2}) | ({3}) | ({4}) | ({5})",
                                             lpPattern, rpPattern, opPattern, varPattern, doublePattern, spacePattern);
 
-
-
             String patternForFirst = String.Format("({0}) | ({1}) | ({2})",
                                                         lpPattern, varPattern, doublePattern);
             Regex reg2 = new Regex(patternForFirst);
@@ -110,7 +106,6 @@ namespace SpreadsheetUtilities
             {
                 throw new FormulaFormatException("Invalid first token.");
             }
-
 
             String patternForLast = String.Format("({0}) | ({1}) | ({2})",
                                                      rpPattern, varPattern, doublePattern);
@@ -124,6 +119,7 @@ namespace SpreadsheetUtilities
             int leftPara = 0;
             int rightPara = 0;
             String prev = "";
+            String newString = "";
             Regex reg = new Regex(pattern);
             foreach (string token in Formula.GetTokens(formula))
             {
@@ -144,7 +140,16 @@ namespace SpreadsheetUtilities
                     {
                         throw new FormulaFormatException("Invalid formula");
                     }
+                    if (double.TryParse(token, out double number))
+                    {
+                        double doub = double.Parse(token);
+                        String newDoub = doub.ToString();
+                        newString += token;
+                        prev = token;
+                        continue;
+                    }
                     prev = token;
+                    newString += token;
                     continue;
                 }
 
@@ -152,12 +157,21 @@ namespace SpreadsheetUtilities
                 Regex regNumVarRight = new Regex(numVarRight);
                 if (regNumVarRight.IsMatch(prev))
                 {
-                    String patternAfterLeft = String.Format("({0}) | ({1})" , opPattern, rpPattern);
-                    Regex regAfterNumVarRight = new Regex(patternAfterLeft);
+                    String patternAfter = String.Format("({0}) | ({1})", opPattern, rpPattern);
+                    Regex regAfterNumVarRight = new Regex(patternAfter);
                     if (!regAfterNumVarRight.IsMatch(token))
                     {
                         throw new FormulaFormatException("Invalid formula");
                     }
+                    prev = token;
+                    newString += token;
+                    continue;
+                }
+                if (double.TryParse(token, out double number))
+                {
+                    double doub = double.Parse(token);
+                    String newDoub = doub.ToString();
+                    newString += token;
                     prev = token;
                     continue;
                 }
@@ -166,8 +180,10 @@ namespace SpreadsheetUtilities
                 {
                     leftPara++;
                     prev = token;
+                    newString += token;
                     continue;
                 }
+
                 if (token.Equals(")"))
                 {
                     rightPara++;
@@ -176,6 +192,7 @@ namespace SpreadsheetUtilities
                         throw new FormulaFormatException("There exists closing parenthesis without an open parenthesis");
                     }
                     prev = token;
+                    newString += token;
                     continue;
                 }
 
@@ -186,14 +203,18 @@ namespace SpreadsheetUtilities
                     {
                         throw new FormulaFormatException("There exists ilegal token in the formula");
                     }
+
+                    normalize(token);
+
                     if (!isValid(normalize(token)))
                     {
                         throw new FormulaFormatException("There exists invalid variable in the formula");
                     }
                     prev = token;
+                    newString += token;
                     continue;
                 }
-
+                newString += token;
                 prev = token;
 
             }
@@ -204,8 +225,7 @@ namespace SpreadsheetUtilities
             }
 
 
-            validFormula = formula;
-
+            validFormula = newString;
         }
 
         /// <summary>
@@ -234,148 +254,121 @@ namespace SpreadsheetUtilities
             string[] substrings = Regex.Split(validFormula, "(\\()|(\\))|(-)|(\\+)|(\\*)|(/)");
             Stack<double> valueStack = new Stack<double>();
             Stack<string> operatorStack = new Stack<string>();
-            foreach (string t in substrings)
+            try
             {
-                if (t.Equals("") || t.Equals(" "))
+                foreach (string t in substrings)
                 {
-                    continue;
-                }
-
-                if (double.TryParse(t, out double number))
-                {
-
-                    if (operatorStack.IsOnTop("*") || operatorStack.IsOnTop("/"))
+                    if (t.Equals("") || t.Equals(" "))
                     {
-                        
-                        //valueStackEmptyCheck(valueStack.Count);
-                        double v = Calculator(number, valueStack.Pop(), operatorStack.Pop());                      
-                        valueStack.Push(v);                       
                         continue;
                     }
-                    else
-                    {                       
-                        valueStack.Push(number);
+
+                    if (double.TryParse(t, out double number))
+                    {
+
+                        if (operatorStack.IsOnTop("*") || operatorStack.IsOnTop("/"))
+                        {
+                            double v = Calculator(number, valueStack.Pop(), operatorStack.Pop());
+                            valueStack.Push(v);
+                            continue;
+                        }
+                        else
+                        {
+                            valueStack.Push(number);
+                            continue;
+                        }
+                    }
+
+
+                    if (t.Equals("+") || t.Equals("-"))
+                    {
+
+                        if (operatorStack.IsOnTop("+") || operatorStack.IsOnTop("-"))
+                        {
+                            double value = Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
+                            valueStack.Push(value);
+                        }
+
+                        operatorStack.Push(t);
                         continue;
                     }
-                }
 
-               
-                if (t.Equals("+") || t.Equals("-"))
-                {
-                   
-                    if (operatorStack.IsOnTop("+") || operatorStack.IsOnTop("-"))
-                    {                        
-                        //stackThrowLessThan2(valueStack.Count);                    
-                        double value = Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());                     
-                        valueStack.Push(value);
-                    }
-                  
-                    operatorStack.Push(t);
-                    continue;
-                }
-              
-                if (t.Equals("*") || t.Equals("/"))
-                {                   
-                    operatorStack.Push(t);
-                    continue;
-                }
-
-            
-                if (t.Equals("("))
-                {
-                  
-                    operatorStack.Push(t);
-                    continue;
-                }
-              
-                if (t.Equals(")"))
-                {
-
-                    
-                    if (operatorStack.IsOnTop("+") || operatorStack.IsOnTop("-"))
+                    if (t.Equals("*") || t.Equals("/"))
                     {
-                        
-                        //stackThrowLessThan2(valueStack.Count);
-                        double v = Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
-                        valueStack.Push(v);
+                        operatorStack.Push(t);
+                        continue;
                     }
 
-                    //if (!operatorStack.IsOnTop("("))
-                    //{
-                    //    throw new ArgumentException("Found ) without proper (");
-                    //}
 
-                    operatorStack.Pop();
-
-                  
-
-                    if (operatorStack.IsOnTop("*") || operatorStack.IsOnTop("/"))
+                    if (t.Equals("("))
                     {
-                        
-                        //stackThrowLessThan2(valueStack.Count);
-                        double v = Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
-                        valueStack.Push(v);
+
+                        operatorStack.Push(t);
+                        continue;
                     }
-                    continue;
-                }
-                // IMPORTANT THE VARIABLEVERIFICATION IS WRONG, NEEDS TO FIX LATER.
-                // IMPORTANT THE VARIABLEVERIFICATION IS WRONG, NEEDS TO FIX LATER.
-                // IMPORTANT THE VARIABLEVERIFICATION IS WRONG, NEEDS TO FIX LATER.
-                // IMPORTANT THE VARIABLEVERIFICATION IS WRONG, NEEDS TO FIX LATER.
-                // IMPORTANT THE VARIABLEVERIFICATION IS WRONG, NEEDS TO FIX LATER.
-                if (VariablesVerification(t))
-                {
-                    if (operatorStack.IsOnTop("*") || operatorStack.IsOnTop("/"))
+
+                    if (t.Equals(")"))
                     {
-                     
-                        //valueStackEmptyCheck(valueStack.Count);
-                       
-                        //try
-                        //{
-                            //Replaces the token with the correct int and calculates the function.
+
+
+                        if (operatorStack.IsOnTop("+") || operatorStack.IsOnTop("-"))
+                        {
+                            double v = Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
+                            valueStack.Push(v);
+                        }
+
+
+                        operatorStack.Pop();
+
+
+
+                        if (operatorStack.IsOnTop("*") || operatorStack.IsOnTop("/"))
+                        {
+
+
+                            double v = Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
+                            valueStack.Push(v);
+                        }
+                        continue;
+                    }
+
+                    if (VariablesVerification(t))
+                    {
+                        if (operatorStack.IsOnTop("*") || operatorStack.IsOnTop("/"))
+                        {
+
+
                             double v = Calculator(lookup(t), valueStack.Pop(), operatorStack.Pop());
                             valueStack.Push(v);
                             continue;
-                        //}
 
-                        //catch
-                        //{
-                        //    //If the variable does not exist, throws 
-                        //    throw new ArgumentException("Can not find variable.");
-                        //}
 
-                    }
-                    else
-                    {
-                        //Else pushes the variable onto the value stack.
-                        valueStack.Push(lookup(t));
+                        }
+                        else
+                        {
+                            //Else pushes the variable onto the value stack.
+                            valueStack.Push(lookup(t));
+                        }
                     }
                 }
-            }
 
-            //If the condition is met and the expression is valid, returns the final value.
-            if (operatorStack.Count == 0)
-            {
-                //valueStackEmptyCheck(valueStack.Count);
+
+                if (operatorStack.Count == 1)
+                {
+                    if ((operatorStack.IsOnTop("+") || operatorStack.IsOnTop("-")) && valueStack.Count == 2)
+                    {
+
+                        return Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
+                    }
+                }
+
                 return valueStack.Pop();
             }
-            else if (operatorStack.Count == 1)
+            catch (ArgumentException e)
             {
-                if ((operatorStack.IsOnTop("+") || operatorStack.IsOnTop("-")) && valueStack.Count == 2)
-                {
-                    //stackThrowLessThan2(valueStack.Count);
-                    return Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
-                }
-
-                //throw new ArgumentException("Invalid: operator remains with no values");
+                return new FormulaError(e.Message);
             }
 
-            return null;
-            //else
-            //{
-            //    throw new ArgumentException("Invalid: operator remains with no values");
-            //}
-        
         }
 
 
@@ -388,7 +381,7 @@ namespace SpreadsheetUtilities
                 case "/":
                     if (val1 == 0)
                     {
-                        throw new ArgumentException("Can not divide by 0");
+                        throw new ArgumentException("can not divide by 0");
                     }
                     return val2 / val1;
                 case "+":
@@ -401,33 +394,13 @@ namespace SpreadsheetUtilities
 
         private static bool VariablesVerification(string v)
         {
-
             Regex regex = new Regex(@"[a-zA-Z_](?: [a-zA-Z_]|\d)*");
             bool boo = regex.IsMatch(v);
-            if (boo == false)
-            {
-                throw new ArgumentException("Invalid variable");
-            }
-
             return regex.IsMatch(v);
         }
 
 
-        //private static void stackThrowLessThan2(double count)
-        //{
-        //    if (count < 2)
-        //    {
-        //        throw new ArgumentException("Invalid expression.");
-        //    }
-        //}
 
-        //private static void valueStackEmptyCheck(double count)
-        //{
-        //    if (count == 0)
-        //    {
-        //        throw new ArgumentException("Invalid expression.");
-        //    }
-        //}
 
         /// <summary>
         /// Enumerates the normalized versions of all of the variables that occur in this 
@@ -452,12 +425,8 @@ namespace SpreadsheetUtilities
                     set.Add(token);
                 }
             }
-            //HashSet<string> set = HashSet<string>set
-            // foreach (string token in GetTokens)
-            // if (token is variable) 
-            // set.add(token)
-            //return set
-            return set;
+
+            return new HashSet<string>(set);
         }
 
         /// <summary>
@@ -475,6 +444,7 @@ namespace SpreadsheetUtilities
             String s = "";
             foreach (string token in Formula.GetTokens(validFormula))
             {
+        
                 s += token;
             }
             return s;
@@ -502,13 +472,13 @@ namespace SpreadsheetUtilities
         /// </summary>
         public override bool Equals(object obj)
         {
-            //|| obj != Formula
-            if (obj == null || obj.Equals(typeof(Formula)))
+
+            if (obj == null || !(obj is Formula))
             {
                 return false;
             }
 
-            return true;
+            return this == (Formula)obj;
         }
 
         /// <summary>
@@ -518,8 +488,23 @@ namespace SpreadsheetUtilities
         /// </summary>
         public static bool operator ==(Formula f1, Formula f2)
         {
-            
-            return f1.ToString() == f2.ToString();
+            // Make a foreach loop to compare token by token or for(int i = 0; i < formula.count; i++){}
+            if (f1 == null && f2 == null)
+            {
+                return true;
+            }
+
+            if (f1 == null && f2 != null)
+            {
+                return false;
+            }
+
+            if (f1 != null && f2 == null)
+            {
+                return false;
+            }
+
+            return f1.ToString().Equals(f2.ToString());
         }
 
         /// <summary>
@@ -529,7 +514,8 @@ namespace SpreadsheetUtilities
         /// </summary>
         public static bool operator !=(Formula f1, Formula f2)
         {
-            return false;
+            return !(f1 == f2);
+
         }
 
         /// <summary>
@@ -539,8 +525,7 @@ namespace SpreadsheetUtilities
         /// </summary>
         public override int GetHashCode()
         {
-            //String has a very good hashcode algorithm
-            return 0;
+            return validFormula.GetHashCode();
         }
 
         /// <summary>

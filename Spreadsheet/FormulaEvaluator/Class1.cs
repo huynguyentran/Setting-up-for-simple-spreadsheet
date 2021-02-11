@@ -36,14 +36,11 @@ namespace FormulaEvaluator
             foreach (string t in substrings)
             {
                 //In case of null and empty space, the method will continue to the next token of the substrings array. 
-                if (t.Equals(""))
+                if (t.Equals("")|| t.Equals(" "))
                 {
                     continue;
                 }
-                if (t.Equals(" "))
-                {
-                    continue;
-                }
+             
 
                 //If token is a number. 
                 if (int.TryParse(t, out int number))
