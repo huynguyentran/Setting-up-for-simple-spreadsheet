@@ -444,7 +444,7 @@ namespace SpreadsheetUtilities
             String s = "";
             foreach (string token in Formula.GetTokens(validFormula))
             {
-        
+                //
                 s += token;
             }
             return s;
