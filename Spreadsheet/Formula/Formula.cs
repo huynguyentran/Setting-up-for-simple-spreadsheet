@@ -295,7 +295,7 @@ namespace SpreadsheetUtilities
                     if (operatorStack.IsOnTop("+") || operatorStack.IsOnTop("-"))
                     {
                         
-                        stackThrowLessThan2(valueStack.Count);
+                        //stackThrowLessThan2(valueStack.Count);
                         double v = Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
                         valueStack.Push(v);
                     }
@@ -318,9 +318,11 @@ namespace SpreadsheetUtilities
                     }
                     continue;
                 }
-
-
-             
+                // IMPORTANT THE VARIABLEVERIFICATION IS WRONG, NEEDS TO FIX LATER.
+                // IMPORTANT THE VARIABLEVERIFICATION IS WRONG, NEEDS TO FIX LATER.
+                // IMPORTANT THE VARIABLEVERIFICATION IS WRONG, NEEDS TO FIX LATER.
+                // IMPORTANT THE VARIABLEVERIFICATION IS WRONG, NEEDS TO FIX LATER.
+                // IMPORTANT THE VARIABLEVERIFICATION IS WRONG, NEEDS TO FIX LATER.
                 if (VariablesVerification(t))
                 {
                     if (operatorStack.IsOnTop("*") || operatorStack.IsOnTop("/"))
@@ -367,6 +369,8 @@ namespace SpreadsheetUtilities
 
                 //throw new ArgumentException("Invalid: operator remains with no values");
             }
+
+            return null;
             //else
             //{
             //    throw new ArgumentException("Invalid: operator remains with no values");
@@ -398,7 +402,7 @@ namespace SpreadsheetUtilities
         private static bool VariablesVerification(string v)
         {
 
-            Regex regex = new Regex(@"\b[a-zA-Z]+\d+\b");
+            Regex regex = new Regex(@"[a-zA-Z_](?: [a-zA-Z_]|\d)*");
             bool boo = regex.IsMatch(v);
             if (boo == false)
             {
@@ -409,21 +413,21 @@ namespace SpreadsheetUtilities
         }
 
 
-        private static void stackThrowLessThan2(double count)
-        {
-            if (count < 2)
-            {
-                throw new ArgumentException("Invalid expression.");
-            }
-        }
+        //private static void stackThrowLessThan2(double count)
+        //{
+        //    if (count < 2)
+        //    {
+        //        throw new ArgumentException("Invalid expression.");
+        //    }
+        //}
 
-        private static void valueStackEmptyCheck(double count)
-        {
-            if (count == 0)
-            {
-                throw new ArgumentException("Invalid expression.");
-            }
-        }
+        //private static void valueStackEmptyCheck(double count)
+        //{
+        //    if (count == 0)
+        //    {
+        //        throw new ArgumentException("Invalid expression.");
+        //    }
+        //}
 
         /// <summary>
         /// Enumerates the normalized versions of all of the variables that occur in this 
@@ -438,12 +442,22 @@ namespace SpreadsheetUtilities
         /// </summary>
         public IEnumerable<String> GetVariables()
         {
+            HashSet<string> set = new HashSet<string>();
+            Regex reg = new Regex(@"[a-zA-Z_](?: [a-zA-Z_]|\d)*");
+
+            foreach (string token in Formula.GetTokens(validFormula))
+            {
+                if (reg.IsMatch(token))
+                {
+                    set.Add(token);
+                }
+            }
             //HashSet<string> set = HashSet<string>set
             // foreach (string token in GetTokens)
             // if (token is variable) 
             // set.add(token)
             //return set
-            return null;
+            return set;
         }
 
         /// <summary>
@@ -458,7 +472,12 @@ namespace SpreadsheetUtilities
         /// </summary>
         public override string ToString()
         {
-            return null;
+            String s = "";
+            foreach (string token in Formula.GetTokens(validFormula))
+            {
+                s += token;
+            }
+            return s;
         }
 
         /// <summary>
@@ -484,11 +503,12 @@ namespace SpreadsheetUtilities
         public override bool Equals(object obj)
         {
             //|| obj != Formula
-            if (obj == null)
+            if (obj == null || obj.Equals(typeof(Formula)))
             {
                 return false;
             }
-            return false;
+
+            return true;
         }
 
         /// <summary>
@@ -498,7 +518,7 @@ namespace SpreadsheetUtilities
         /// </summary>
         public static bool operator ==(Formula f1, Formula f2)
         {
-
+            
             return f1.ToString() == f2.ToString();
         }
 
