@@ -90,6 +90,7 @@ namespace SpreadsheetUtilities
             }
 
 
+
             String lpPattern = @"\(";
             String rpPattern = @"\)";
             String opPattern = @"[\+\-*/]";
@@ -97,9 +98,29 @@ namespace SpreadsheetUtilities
             String doublePattern = @"(?: \d+\.\d* | \d*\.\d+ | \d+ ) (?: [eE][\+-]?\d+)?";
             String spacePattern = @"\s+";
 
-            // Overall pattern
             String pattern = String.Format("({0}) | ({1}) | ({2}) | ({3}) | ({4}) | ({5})",
                                             lpPattern, rpPattern, opPattern, varPattern, doublePattern, spacePattern);
+
+
+
+            String patternForFirst = String.Format("({0}) | ({1}) | ({2})",
+                                                        lpPattern, varPattern, doublePattern);
+            Regex reg2 = new Regex(patternForFirst);
+            if (!reg2.IsMatch(Formula.GetTokens(formula).First()))
+            {
+                throw new FormulaFormatException("Invalid first token.");
+            }
+
+
+            String patternForLast = String.Format("({0}) | ({1}) | ({2})",
+                                                     rpPattern, varPattern, doublePattern);
+            Regex reg3 = new Regex(patternForFirst);
+            if (!reg3.IsMatch(Formula.GetTokens(formula).First()))
+            {
+                throw new FormulaFormatException("Invalid last token.");
+            }
+
+
             int leftPara = 0;
             int rightPara = 0;
             String prev = "";
@@ -109,16 +130,16 @@ namespace SpreadsheetUtilities
 
                 if (!reg.IsMatch(token))
                 {
-                    throw new FormulaFormatException("There are illegal token in the formula");
+                    throw new FormulaFormatException("formula is syntactically incorrect");
                 }
 
                 String leftAndOp = String.Format("({0}) | ({1})", lpPattern, opPattern);
                 Regex regLeftOp = new Regex(leftAndOp);
                 if (regLeftOp.IsMatch(prev))
                 {
-                    String patternAfterLeft = String.Format("({0}) | ({1})| ({2})",
+                    String patternAfterLeftOp = String.Format("({0}) | ({1}) | ({2})",
                                                                 doublePattern, varPattern, lpPattern);
-                    Regex regAfterLeftAndOp = new Regex(patternAfterLeft);
+                    Regex regAfterLeftAndOp = new Regex(patternAfterLeftOp);
                     if (!regAfterLeftAndOp.IsMatch(token))
                     {
                         throw new FormulaFormatException("Invalid formula");
@@ -127,12 +148,11 @@ namespace SpreadsheetUtilities
                     continue;
                 }
 
-                String numVarRight = String.Format("({0}) | ({1})| ({2})", doublePattern, varPattern, rpPattern);
+                String numVarRight = String.Format("({0}) | ({1}) | ({2})", doublePattern, varPattern, rpPattern);
                 Regex regNumVarRight = new Regex(numVarRight);
                 if (regNumVarRight.IsMatch(prev))
                 {
-                    String patternAfterLeft = String.Format("({0}) | ({1})",
-                                                                opPattern, rpPattern);
+                    String patternAfterLeft = String.Format("({0}) | ({1})" , opPattern, rpPattern);
                     Regex regAfterNumVarRight = new Regex(patternAfterLeft);
                     if (!regAfterNumVarRight.IsMatch(token))
                     {
@@ -159,6 +179,21 @@ namespace SpreadsheetUtilities
                     continue;
                 }
 
+                Regex regVar = new Regex(varPattern);
+                if (regVar.IsMatch(token))
+                {
+                    if (regVar.IsMatch(normalize(token)))
+                    {
+                        throw new FormulaFormatException("There exists ilegal token in the formula");
+                    }
+                    if (!isValid(normalize(token)))
+                    {
+                        throw new FormulaFormatException("There exists invalid variable in the formula");
+                    }
+                    prev = token;
+                    continue;
+                }
+
                 prev = token;
 
             }
@@ -167,24 +202,6 @@ namespace SpreadsheetUtilities
             {
                 throw new FormulaFormatException("There exists extra parenthesis");
             }
-            String patternForFirst = String.Format("({0}) | ({1}) | ({2})",
-                                                        lpPattern, varPattern, doublePattern);
-            Regex reg2 = new Regex(patternForFirst);
-            if (!reg2.IsMatch(Formula.GetTokens(formula).First()))
-            {
-                throw new FormulaFormatException("Invalid first token.");
-            }
-
-
-            String patternForLast = String.Format("({0}) | ({1}) | ({2})",
-                                                     rpPattern, varPattern, doublePattern);
-            Regex reg3 = new Regex(patternForFirst);
-            if (!reg3.IsMatch(Formula.GetTokens(formula).First()))
-            {
-                throw new FormulaFormatException("Invalid last token.");
-            }
-
-
 
 
             validFormula = formula;
@@ -214,93 +231,88 @@ namespace SpreadsheetUtilities
         /// </summary>
         public object Evaluate(Func<string, double> lookup)
         {
-
+            string[] substrings = Regex.Split(validFormula, "(\\()|(\\))|(-)|(\\+)|(\\*)|(/)");
             Stack<double> valueStack = new Stack<double>();
             Stack<string> operatorStack = new Stack<string>();
-            foreach (string t in Formula.GetTokens(validFormula))
+            foreach (string t in substrings)
             {
-                //if (t.Equals("") || t.Equals(" "))
-                //{
-                //    continue;
-                //}
+                if (t.Equals("") || t.Equals(" "))
+                {
+                    continue;
+                }
 
                 if (double.TryParse(t, out double number))
                 {
+
                     if (operatorStack.IsOnTop("*") || operatorStack.IsOnTop("/"))
                     {
-                        valueStackEmptyCheck(valueStack.Count);
-                        double v = Calculator(number, valueStack.Pop(), operatorStack.Pop());
-                        valueStack.Push(v);
+                        
+                        //valueStackEmptyCheck(valueStack.Count);
+                        double v = Calculator(number, valueStack.Pop(), operatorStack.Pop());                      
+                        valueStack.Push(v);                       
                         continue;
                     }
                     else
-                    {
+                    {                       
                         valueStack.Push(number);
                         continue;
                     }
                 }
 
+               
                 if (t.Equals("+") || t.Equals("-"))
                 {
-
+                   
                     if (operatorStack.IsOnTop("+") || operatorStack.IsOnTop("-"))
-                    {
-
-                        stackThrowLessThan2(valueStack.Count);
-
-                        double value = Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
-
+                    {                        
+                        //stackThrowLessThan2(valueStack.Count);                    
+                        double value = Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());                     
                         valueStack.Push(value);
                     }
-                    //Pushes the token into the token stack.
+                  
+                    operatorStack.Push(t);
+                    continue;
+                }
+              
+                if (t.Equals("*") || t.Equals("/"))
+                {                   
                     operatorStack.Push(t);
                     continue;
                 }
 
-                //If token is a * or /
-                if (t.Equals("*") || t.Equals("/") || t.Equals("("))
+            
+                if (t.Equals("("))
                 {
-                    //Pushes the token into the token stack.
+                  
                     operatorStack.Push(t);
                     continue;
                 }
-
-                ////If token is a ( 
-                //if (t.Equals("("))
-                //{
-                //    //Pushes the token into the token stack.
-                //    operatorStack.Push(t);
-                //    continue;
-                //}
-
-
-                //If token is )
+              
                 if (t.Equals(")"))
                 {
 
-                    //If + or - is on top of the operatorStack. 
+                    
                     if (operatorStack.IsOnTop("+") || operatorStack.IsOnTop("-"))
                     {
-                        //Performs the same calculation as above.
+                        
                         stackThrowLessThan2(valueStack.Count);
                         double v = Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
                         valueStack.Push(v);
                     }
 
-                    //If there is no ( after the calculation, throws an error. 
-                    if (!operatorStack.IsOnTop("("))
-                    {
-                        throw new ArgumentException("Found ) without proper (");
-                    }
+                    //if (!operatorStack.IsOnTop("("))
+                    //{
+                    //    throw new ArgumentException("Found ) without proper (");
+                    //}
+
                     operatorStack.Pop();
 
-                    //If / or * is on top of the operatorStack. 
-
+                  
 
                     if (operatorStack.IsOnTop("*") || operatorStack.IsOnTop("/"))
                     {
-                        //Performs the same calculation as above.
-                        stackThrowLessThan2(valueStack.Count);
+                        
+                        //stackThrowLessThan2(valueStack.Count);
                         double v = Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
                         valueStack.Push(v);
                     }
@@ -308,27 +320,27 @@ namespace SpreadsheetUtilities
                 }
 
 
-                //If token is a variable
+             
                 if (VariablesVerification(t))
                 {
                     if (operatorStack.IsOnTop("*") || operatorStack.IsOnTop("/"))
                     {
-                        //Throws invalid expression.
-                        valueStackEmptyCheck(valueStack.Count);
-                        //
-                        try
-                        {
+                     
+                        //valueStackEmptyCheck(valueStack.Count);
+                       
+                        //try
+                        //{
                             //Replaces the token with the correct int and calculates the function.
                             double v = Calculator(lookup(t), valueStack.Pop(), operatorStack.Pop());
                             valueStack.Push(v);
                             continue;
-                        }
+                        //}
 
-                        catch
-                        {
-                            //If the variable does not exist, throws 
-                            throw new ArgumentException("Can not find variable.");
-                        }
+                        //catch
+                        //{
+                        //    //If the variable does not exist, throws 
+                        //    throw new ArgumentException("Can not find variable.");
+                        //}
 
                     }
                     else
@@ -338,24 +350,28 @@ namespace SpreadsheetUtilities
                     }
                 }
             }
+
+            //If the condition is met and the expression is valid, returns the final value.
             if (operatorStack.Count == 0)
             {
-                valueStackEmptyCheck(valueStack.Count);
+                //valueStackEmptyCheck(valueStack.Count);
                 return valueStack.Pop();
             }
             else if (operatorStack.Count == 1)
             {
                 if ((operatorStack.IsOnTop("+") || operatorStack.IsOnTop("-")) && valueStack.Count == 2)
                 {
+                    //stackThrowLessThan2(valueStack.Count);
                     return Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
                 }
 
-                throw new ArgumentException("Invalid: operator remains with no values");
+                //throw new ArgumentException("Invalid: operator remains with no values");
             }
-            else
-            {
-                throw new ArgumentException("Invalid: operator remains with no values");
-            }
+            //else
+            //{
+            //    throw new ArgumentException("Invalid: operator remains with no values");
+            //}
+        
         }
 
 
