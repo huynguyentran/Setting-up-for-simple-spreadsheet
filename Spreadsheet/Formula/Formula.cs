@@ -95,84 +95,104 @@ namespace SpreadsheetUtilities
             String varPattern = @"[a-zA-Z_](?: [a-zA-Z_]|\d)*";
             String doublePattern = @"(?: \d+\.\d* | \d*\.\d+ | \d+ ) (?: [eE][\+-]?\d+)?";
             String spacePattern = @"\s+";
-
             String pattern = String.Format("({0}) | ({1}) | ({2}) | ({3}) | ({4}) | ({5})",
                                             lpPattern, rpPattern, opPattern, varPattern, doublePattern, spacePattern);
 
-            String patternForFirst = String.Format("({0}) | ({1}) | ({2})",
-                                                        lpPattern, varPattern, doublePattern);
-            Regex reg2 = new Regex(patternForFirst);
-            if (!reg2.IsMatch(Formula.GetTokens(formula).First()))
+            if (checkForFirst(Formula.GetTokens(formula).First()) == false)
             {
                 throw new FormulaFormatException("Invalid first token.");
             }
 
-            String patternForLast = String.Format("({0}) | ({1}) | ({2})",
-                                                     rpPattern, varPattern, doublePattern);
-            Regex reg3 = new Regex(patternForFirst);
-            if (!reg3.IsMatch(Formula.GetTokens(formula).First()))
+            if (checkForLast(Formula.GetTokens(formula).Last()) == false)
             {
                 throw new FormulaFormatException("Invalid last token.");
             }
-
 
             int leftPara = 0;
             int rightPara = 0;
             String prev = "";
             String newString = "";
-            Regex reg = new Regex(pattern);
+            Regex regValid = new Regex(pattern, RegexOptions.IgnorePatternWhitespace);
+            Regex regVar = new Regex(varPattern, RegexOptions.IgnorePatternWhitespace);
             foreach (string token in Formula.GetTokens(formula))
             {
 
-                if (!reg.IsMatch(token))
+                if (!regValid.IsMatch(token))
                 {
-                    throw new FormulaFormatException("formula is syntactically incorrect");
+                    throw new FormulaFormatException("formula is syntactically incorrect.");
                 }
 
-                String leftAndOp = String.Format("({0}) | ({1})", lpPattern, opPattern);
-                Regex regLeftOp = new Regex(leftAndOp);
-                if (regLeftOp.IsMatch(prev))
+                String leftAndOp = "+-*/(";
+                if (leftAndOp.Contains(prev))
                 {
-                    String patternAfterLeftOp = String.Format("({0}) | ({1}) | ({2})",
-                                                                doublePattern, varPattern, lpPattern);
-                    Regex regAfterLeftAndOp = new Regex(patternAfterLeftOp);
-                    if (!regAfterLeftAndOp.IsMatch(token))
+                    if (token.Equals("("))
                     {
-                        throw new FormulaFormatException("Invalid formula");
-                    }
-                    if (double.TryParse(token, out double number))
-                    {
-                        double doub = double.Parse(token);
-                        String newDoub = doub.ToString();
-                        newString += token;
+                        leftPara++;
                         prev = token;
+                        newString += token;
                         continue;
                     }
+
+                    if (double.TryParse(token, out double num))
+                    {
+                        String newDoub = num.ToString();
+                        newString += newDoub;
+                        prev = newDoub;
+                        continue;
+                    }
+
+                    if (regVar.IsMatch(token))
+                    {
+                        if (!regVar.IsMatch(normalize(token)))
+                        {
+                            throw new FormulaFormatException("There exists ilegal token in the formula.");
+                        }
+
+                        String normalizedVar = normalize(token);
+
+                        if (!isValid(normalizedVar))
+                        {
+                            throw new FormulaFormatException("There exists invalid variable in the formula.");
+                        }
+                        prev = normalizedVar;
+                        newString += normalizedVar;
+                        continue;
+                    }
+
+                    throw new FormulaFormatException("Invalid formula: there should be a number, a variable, or a opening parenthesis after an operator or an opening parenthesis.");
+
+                }
+
+                if (double.TryParse(prev, out double d) || regVar.IsMatch(prev) || prev.Equals(")"))
+                {
+                    String rightAndOp = "+-*/)";
+                    if (!rightAndOp.Contains(token))
+                    {
+                        throw new FormulaFormatException("Invalid formula: there should be an operator or a closing parenthesis after a number, a variable, or a closing parenthesis.");
+                    }
+
+                    if (token.Equals(")"))
+                    {
+                        rightPara++;
+                        if (rightPara > leftPara)
+                        {
+                            throw new FormulaFormatException("There exists closing parenthesis without an appropriate open parenthesis.");
+                        }
+                        prev = token;
+                        newString += token;
+                        continue;
+                    }
+
                     prev = token;
                     newString += token;
                     continue;
                 }
 
-                String numVarRight = String.Format("({0}) | ({1}) | ({2})", doublePattern, varPattern, rpPattern);
-                Regex regNumVarRight = new Regex(numVarRight);
-                if (regNumVarRight.IsMatch(prev))
-                {
-                    String patternAfter = String.Format("({0}) | ({1})", opPattern, rpPattern);
-                    Regex regAfterNumVarRight = new Regex(patternAfter);
-                    if (!regAfterNumVarRight.IsMatch(token))
-                    {
-                        throw new FormulaFormatException("Invalid formula");
-                    }
-                    prev = token;
-                    newString += token;
-                    continue;
-                }
                 if (double.TryParse(token, out double number))
                 {
-                    double doub = double.Parse(token);
-                    String newDoub = doub.ToString();
-                    newString += token;
-                    prev = token;
+                    String newDoub = number.ToString();
+                    newString += newDoub;
+                    prev = newDoub;
                     continue;
                 }
 
@@ -189,31 +209,32 @@ namespace SpreadsheetUtilities
                     rightPara++;
                     if (rightPara > leftPara)
                     {
-                        throw new FormulaFormatException("There exists closing parenthesis without an open parenthesis");
+                        throw new FormulaFormatException("There exists closing parenthesis without an appropriate open parenthesis.");
                     }
                     prev = token;
                     newString += token;
                     continue;
                 }
 
-                Regex regVar = new Regex(varPattern);
+
                 if (regVar.IsMatch(token))
                 {
-                    if (regVar.IsMatch(normalize(token)))
+                    if (!regVar.IsMatch(normalize(token)))
                     {
-                        throw new FormulaFormatException("There exists ilegal token in the formula");
+                        throw new FormulaFormatException("There exists ilegal token in the formula.");
                     }
 
-                    normalize(token);
+                    String normalizedVar = normalize(token);
 
                     if (!isValid(normalize(token)))
                     {
-                        throw new FormulaFormatException("There exists invalid variable in the formula");
+                        throw new FormulaFormatException("There exists invalid variable in the formula.");
                     }
-                    prev = token;
-                    newString += token;
+                    prev = normalizedVar;
+                    newString += normalizedVar;
                     continue;
                 }
+
                 newString += token;
                 prev = token;
 
@@ -221,12 +242,43 @@ namespace SpreadsheetUtilities
 
             if (leftPara != rightPara)
             {
-                throw new FormulaFormatException("There exists extra parenthesis");
+                throw new FormulaFormatException("There exists open parenthesis without an appropriate close parenthesis.");
             }
-
 
             validFormula = newString;
         }
+
+        private bool checkForFirst(string s)
+        {
+            String lpPattern = @"\(";
+            String varPattern = @"[a-zA-Z_](?: [a-zA-Z_]|\d)*";
+            String doublePattern = @"(?: \d+\.\d* | \d*\.\d+ | \d+ ) (?: [eE][\+-]?\d+)?";
+            String pattern = string.Format("({0}) | ({1}) | ({2})", lpPattern, varPattern, doublePattern);
+            Regex reg = new Regex(pattern, RegexOptions.IgnorePatternWhitespace);
+            if (reg.IsMatch(s))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private bool checkForLast(string s)
+        {
+            String rpPattern = @"\)";
+            String varPattern = @"[a-zA-Z_](?: [a-zA-Z_]|\d)*";
+            String doublePattern = @"(?: \d+\.\d* | \d*\.\d+ | \d+ ) (?: [eE][\+-]?\d+)?";
+            String pattern = String.Format("({0}) | ({1}) | ({2})",
+                                                   rpPattern, varPattern, doublePattern);
+
+            Regex reg = new Regex(pattern, RegexOptions.IgnorePatternWhitespace);
+            if (reg.IsMatch(s))
+            {
+                return true;
+            }
+            return false;
+
+        }
+
 
         /// <summary>
         /// Evaluates this Formula, using the lookup delegate to determine the values of
@@ -441,13 +493,7 @@ namespace SpreadsheetUtilities
         /// </summary>
         public override string ToString()
         {
-            String s = "";
-            foreach (string token in Formula.GetTokens(validFormula))
-            {
-                //
-                s += token;
-            }
-            return s;
+            return validFormula;
         }
 
         /// <summary>
@@ -489,17 +535,17 @@ namespace SpreadsheetUtilities
         public static bool operator ==(Formula f1, Formula f2)
         {
             // Make a foreach loop to compare token by token or for(int i = 0; i < formula.count; i++){}
-            if (f1 == null && f2 == null)
+            if (f1 is null && f2 is null)
             {
                 return true;
             }
 
-            if (f1 == null && f2 != null)
+            if (f1 is null && !(f2 is null))
             {
                 return false;
             }
 
-            if (f1 != null && f2 == null)
+            if (!(f1 is null) && f2 is null)
             {
                 return false;
             }
