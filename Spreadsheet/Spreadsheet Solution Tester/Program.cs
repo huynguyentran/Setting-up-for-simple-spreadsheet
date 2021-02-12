@@ -12,8 +12,9 @@ namespace Spreadsheet_Solution_Tester
         {
             return 7;
         }
+    
 
-        static int AdvanceLookup(string s)
+    static int AdvanceLookup(string s)
         {
             if (s == "a1")
             {
@@ -30,7 +31,6 @@ namespace Spreadsheet_Solution_Tester
                 return 3;
             }
             else throw new ArgumentException("unknow variable");
-
         }
 
         static void Main(string[] args)

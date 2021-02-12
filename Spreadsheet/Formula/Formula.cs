@@ -110,7 +110,7 @@ namespace SpreadsheetUtilities
 
             int leftPara = 0;
             int rightPara = 0;
-            String prev="";
+            String prev = "";
             String newString = "";
             Regex regValid = new Regex(pattern, RegexOptions.IgnorePatternWhitespace);
             Regex regVar = new Regex(varPattern, RegexOptions.IgnorePatternWhitespace);
@@ -145,14 +145,18 @@ namespace SpreadsheetUtilities
                     {
                         if (!regVar.IsMatch(normalize(token)))
                         {
-                            throw new FormulaFormatException("There exists ilegal token in the formula.");
+                            throw new FormulaFormatException("Invalid variable returns by the noramlizer.");
                         }
+
+                        //FormulaFormatExcpetion
 
                         String normalizedVar = normalize(token);
 
+
+
                         if (!isValid(normalizedVar))
                         {
-                            throw new FormulaFormatException("There exists invalid variable in the formula.");
+                            throw new FormulaFormatException("Variables are not allowed by the validation.");
                         }
                         prev = normalizedVar;
                         newString += normalizedVar;
@@ -188,13 +192,7 @@ namespace SpreadsheetUtilities
                     continue;
                 }
 
-                if (double.TryParse(token, out double number))
-                {
-                    String newDoub = number.ToString();
-                    newString += newDoub;
-                    prev = newDoub;
-                    continue;
-                }
+
 
                 if (token.Equals("("))
                 {
@@ -204,40 +202,36 @@ namespace SpreadsheetUtilities
                     continue;
                 }
 
-                //if (token.Equals(")"))
-                //{
-                //    rightPara++;
-                //    if (rightPara > leftPara)
-                //    {
-                //        throw new FormulaFormatException("There exists closing parenthesis without an appropriate open parenthesis.");
-                //    }
-                //    prev = token;
-                //    newString += token;
-                //    continue;
-                //}
 
 
                 if (regVar.IsMatch(token))
                 {
                     if (!regVar.IsMatch(normalize(token)))
                     {
-                        throw new FormulaFormatException("There exists ilegal token in the formula.");
+                        throw new FormulaFormatException("Invalid variable returns by the noramlizer.");
                     }
 
                     String normalizedVar = normalize(token);
 
                     if (!isValid(normalize(token)))
                     {
-                        throw new FormulaFormatException("There exists invalid variable in the formula.");
+                        throw new FormulaFormatException("Variables are not allowed by the validation.");
                     }
                     prev = normalizedVar;
                     newString += normalizedVar;
                     continue;
                 }
 
-                newString += token;
-                prev = token;
 
+
+                //if (double.TryParse(token, out double number))
+                //{
+                double number = double.Parse(token);
+                String newDouble = number.ToString();
+                newString += newDouble;
+                prev = newDouble;
+                continue;
+                //}
             }
 
             if (leftPara != rightPara)
@@ -410,7 +404,7 @@ namespace SpreadsheetUtilities
                     //if ((operatorStack.IsOnTop("+") || operatorStack.IsOnTop("-")) && valueStack.Count == 2)
                     //{
 
-                        return Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
+                    return Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
                     //}
                 }
 
@@ -446,7 +440,8 @@ namespace SpreadsheetUtilities
 
         private static bool VariablesVerification(string v)
         {
-            Regex regex = new Regex(@"[a-zA-Z_](?: [a-zA-Z_]|\d)*");
+
+            Regex regex = new Regex(@"[a-zA-Z_](?: [a-zA-Z_]|\d)*", RegexOptions.IgnorePatternWhitespace);
             bool boo = regex.IsMatch(v);
             return regex.IsMatch(v);
         }
@@ -540,12 +535,12 @@ namespace SpreadsheetUtilities
                 return true;
             }
 
-            if (f1 is null && !(f2 is null))
+            if (!(f1 is null) && f2 is null)
             {
                 return false;
             }
 
-            if (!(f1 is null) && f2 is null)
+            if (f1 is null && !(f2 is null))
             {
                 return false;
             }
