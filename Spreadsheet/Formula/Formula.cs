@@ -86,7 +86,7 @@ namespace SpreadsheetUtilities
         {
             if (Formula.GetTokens(formula).Count() < 1)
             {
-                throw new FormulaFormatException("There are less than one token in the formula");
+                throw new FormulaFormatException("There are less than one token in the formula.");
             }
 
             String lpPattern = @"\(";
@@ -110,7 +110,7 @@ namespace SpreadsheetUtilities
 
             int leftPara = 0;
             int rightPara = 0;
-            String prev = "";
+            String prev="";
             String newString = "";
             Regex regValid = new Regex(pattern, RegexOptions.IgnorePatternWhitespace);
             Regex regVar = new Regex(varPattern, RegexOptions.IgnorePatternWhitespace);
@@ -119,11 +119,11 @@ namespace SpreadsheetUtilities
 
                 if (!regValid.IsMatch(token))
                 {
-                    throw new FormulaFormatException("formula is syntactically incorrect.");
+                    throw new FormulaFormatException("There exists unidentified token in the formula.");
                 }
 
                 String leftAndOp = "+-*/(";
-                if (leftAndOp.Contains(prev))
+                if (leftAndOp.Contains(prev) && !prev.Equals(""))
                 {
                     if (token.Equals("("))
                     {
@@ -204,17 +204,17 @@ namespace SpreadsheetUtilities
                     continue;
                 }
 
-                if (token.Equals(")"))
-                {
-                    rightPara++;
-                    if (rightPara > leftPara)
-                    {
-                        throw new FormulaFormatException("There exists closing parenthesis without an appropriate open parenthesis.");
-                    }
-                    prev = token;
-                    newString += token;
-                    continue;
-                }
+                //if (token.Equals(")"))
+                //{
+                //    rightPara++;
+                //    if (rightPara > leftPara)
+                //    {
+                //        throw new FormulaFormatException("There exists closing parenthesis without an appropriate open parenthesis.");
+                //    }
+                //    prev = token;
+                //    newString += token;
+                //    continue;
+                //}
 
 
                 if (regVar.IsMatch(token))
@@ -407,11 +407,11 @@ namespace SpreadsheetUtilities
 
                 if (operatorStack.Count == 1)
                 {
-                    if ((operatorStack.IsOnTop("+") || operatorStack.IsOnTop("-")) && valueStack.Count == 2)
-                    {
+                    //if ((operatorStack.IsOnTop("+") || operatorStack.IsOnTop("-")) && valueStack.Count == 2)
+                    //{
 
                         return Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
-                    }
+                    //}
                 }
 
                 return valueStack.Pop();
@@ -436,12 +436,12 @@ namespace SpreadsheetUtilities
                         throw new ArgumentException("can not divide by 0");
                     }
                     return val2 / val1;
-                case "+":
-                    return val2 + val1;
+                //case "+":
+                //    return val2 + val1;
                 case "-":
                     return val2 - val1;
             }
-            return 0;
+            return val2 + val1;
         }
 
         private static bool VariablesVerification(string v)
