@@ -225,7 +225,7 @@ namespace SpreadsheetUtilities
 
 
                 //if (double.TryParse(token, out double number))
-                //{
+                //{d
                 double number = double.Parse(token);
                 String newDouble = number.ToString();
                 newString += newDouble;

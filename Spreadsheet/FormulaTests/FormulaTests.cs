@@ -215,7 +215,7 @@ namespace FormulaTests
         //    Formula f1 = new Formula("x1+x2+50", s => s.ToUpper(), s => s == "x2");
         //    double val = (double)f1.Evaluate(x => 0);
         //    Assert.AreEqual(6, val, 1e-9);
-        //}
+        //}'
         //{ <sequence-of-statements> }
 
         [TestMethod()]
