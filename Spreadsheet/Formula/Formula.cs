@@ -154,7 +154,7 @@ namespace SpreadsheetUtilities
                     {
                         if (!regVar.IsMatch(normalize(token)))
                         {
-                            throw new FormulaFormatException("Invalid variable returns by the noramlizer.");
+                            throw new FormulaFormatException("Invalid variables returned by the noramlizer.");
                         }
 
                         String normalizedVar = normalize(token);
@@ -168,7 +168,7 @@ namespace SpreadsheetUtilities
                         continue;
                     }
 
-                    throw new FormulaFormatException("Invalid formula: there should be a number, a variable, or a opening parenthesis after an operator or an opening parenthesis.");
+                    throw new FormulaFormatException("Invalid formula: there should be a number, a variable, or a open parenthesis after an operator or an open parenthesis.");
 
                 }
 
@@ -177,7 +177,7 @@ namespace SpreadsheetUtilities
                     String rightAndOp = "+-*/)";
                     if (!rightAndOp.Contains(token))
                     {
-                        throw new FormulaFormatException("Invalid formula: there should be an operator or a closing parenthesis after a number, a variable, or a closing parenthesis.");
+                        throw new FormulaFormatException("Invalid formula: there should be an operator or a close parenthesis after a number, a variable, or a close parenthesis.");
                     }
 
                     if (token.Equals(")"))
@@ -185,7 +185,7 @@ namespace SpreadsheetUtilities
                         rightPara++;
                         if (rightPara > leftPara)
                         {
-                            throw new FormulaFormatException("There exists closing parenthesis without an appropriate open parenthesis.");
+                            throw new FormulaFormatException("There exists close parenthesis without an appropriate open parenthesis.");
                         }
                         prev = token;
                         newString += token;
@@ -213,7 +213,7 @@ namespace SpreadsheetUtilities
                 {
                     if (!regVar.IsMatch(normalize(token)))
                     {
-                        throw new FormulaFormatException("Invalid variable returns by the noramlizer.");
+                        throw new FormulaFormatException("Invalid variables returned by the noramlizer.");
                     }
 
                     String normalizedVar = normalize(token);

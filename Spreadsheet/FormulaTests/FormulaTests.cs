@@ -227,6 +227,28 @@ namespace FormulaTests
             Assert.AreEqual("can not find X3", a.Reason);
         }
 
+
+        [TestMethod()]
+        public void _Evaluate10()
+        {
+            Formula f1 = new Formula("(x1+2)/4-(x2-(x3*5))*4-100", s => s.ToLower(), s => true);
+
+           double val = (double)f1.Evaluate(x =>
+            {
+                if (x == "x1")
+                {
+                    return 1;
+                }
+                if (x == "x2")
+                    return 2;
+                if (x == "x3")
+                    return 3;
+
+                else throw new ArgumentException("can not find " + x);
+            });
+            Assert.AreEqual(-47.25, val, 1e-9);
+        }
+
         [TestMethod()]
         public void _EvaluateDivideByZero()
         {
@@ -238,14 +260,15 @@ namespace FormulaTests
 
         }
 
+        [TestMethod()]
         public void _EvaluateDivideByZero2()
         {
             Formula f1 = new Formula("1/x1");
             var a = (FormulaError)f1.Evaluate(x =>
             {
-                if (x == "X1")
+                if (x == "x1")
                 {
-                    return 1;
+                    return 0;
                 }
                 else throw new ArgumentException("can not find " + x);
             });
@@ -315,7 +338,7 @@ namespace FormulaTests
             try { Formula f1 = new Formula("(1+2))"); }
             catch (FormulaFormatException e)
             {
-                Assert.AreEqual("There exists closing parenthesis without an appropriate open parenthesis.", e.Message);
+                Assert.AreEqual("There exists close parenthesis without an appropriate open parenthesis.", e.Message);
             }
 
         }
@@ -326,7 +349,7 @@ namespace FormulaTests
             try { Formula f1 = new Formula("1+2)+2"); }
             catch (FormulaFormatException e)
             {
-                Assert.AreEqual("There exists closing parenthesis without an appropriate open parenthesis.", e.Message);
+                Assert.AreEqual("There exists close parenthesis without an appropriate open parenthesis.", e.Message);
             }
 
         }
@@ -383,7 +406,7 @@ namespace FormulaTests
             try { Formula f1 = new Formula("()"); }
             catch (FormulaFormatException e)
             {
-                Assert.AreEqual("Invalid formula: there should be a number, a variable, or a opening parenthesis after an operator or an opening parenthesis.", e.Message);
+                Assert.AreEqual("Invalid formula: there should be a number, a variable, or a open parenthesis after an operator or an open parenthesis.", e.Message);
             }
 
         }
@@ -394,7 +417,7 @@ namespace FormulaTests
             try { Formula f1 = new Formula("(+3"); }
             catch (FormulaFormatException e)
             {
-                Assert.AreEqual("Invalid formula: there should be a number, a variable, or a opening parenthesis after an operator or an opening parenthesis.", e.Message);
+                Assert.AreEqual("Invalid formula: there should be a number, a variable, or a open parenthesis after an operator or an open parenthesis.", e.Message);
             }
 
         }
@@ -438,7 +461,7 @@ namespace FormulaTests
             try { Formula f1 = new Formula("x1/x2+x1*x2", s => "$", s => true); }
             catch (FormulaFormatException e)
             {
-                Assert.AreEqual("Invalid variable returns by the noramlizer.", e.Message);
+                Assert.AreEqual("Invalid variables returned by the noramlizer.", e.Message);
             }
 
         }
@@ -449,7 +472,7 @@ namespace FormulaTests
             try { Formula f1 = new Formula("((x1/x2)+3)-(x1*x2)/x3", s => "$", s => true); }
             catch (FormulaFormatException e)
             {
-                Assert.AreEqual("Invalid variable returns by the noramlizer.", e.Message);
+                Assert.AreEqual("Invalid variables returned by the noramlizer.", e.Message);
             }
 
 
@@ -463,7 +486,7 @@ namespace FormulaTests
             try { Formula f1 = new Formula("123+54(-12", s => s, s => true); }
             catch (FormulaFormatException e)
             {
-                Assert.AreEqual("Invalid formula: there should be an operator or a closing parenthesis after a number, a variable, or a closing parenthesis.", e.Message);
+                Assert.AreEqual("Invalid formula: there should be an operator or a close parenthesis after a number, a variable, or a close parenthesis.", e.Message);
             }
 
         }
