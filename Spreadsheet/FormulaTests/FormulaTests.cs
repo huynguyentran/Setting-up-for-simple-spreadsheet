@@ -65,6 +65,17 @@ namespace FormulaTests
         }
 
         [TestMethod()]
+        public void _SimpleHashCodeEquals2()
+        {
+            Formula f1 = new Formula("x1+1", s=> s.ToLower(),s=> true );
+            Formula f2 = new Formula("X1+1", s=> s.ToLower(),s => true);
+            Formula f3 = new Formula("X1+ x2", s => s.ToLower(), s => true);
+            Assert.IsTrue(f1 == f2);
+            Assert.AreEqual(f1.GetHashCode(), f2.GetHashCode());
+            Assert.AreNotEqual(f1.GetHashCode(), f3.GetHashCode());
+        }
+
+        [TestMethod()]
         public void _SimpleHashCodeNotEquals()
         {
             Formula f1 = new Formula("x1 + 1.0");
@@ -99,6 +110,14 @@ namespace FormulaTests
             Assert.IsTrue(f1 != f2);
         }
 
+        [TestMethod()]
+        public void _SimpleConstructorCompareOp()
+        {
+            Formula f1 = new Formula("1.0 + 1.0");
+            Formula f2 = new Formula("1.0 + 1.0");
+            Assert.IsTrue(f1 == f2);
+            Assert.IsFalse(f1 != f2);
+        }
 
         [TestMethod()]
         public void _SimpleConstructorNotEquals()
