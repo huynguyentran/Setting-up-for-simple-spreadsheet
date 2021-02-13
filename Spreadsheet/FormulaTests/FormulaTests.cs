@@ -10,26 +10,36 @@ namespace FormulaTests
     {
 
 
-
         [TestMethod()]
         public void _SimpleConstructorEquals()
         {
             Formula f1 = new Formula("1.0 + 1.0");
             Formula f2 = new Formula("1.0 + 1.0");
             Assert.IsTrue(f1 == f2);
+            Assert.AreEqual(f1.GetHashCode(), f2.GetHashCode());
         }
 
         [TestMethod()]
-        public void _SimpleEquals()
+        public void _SimpleEquals1()
         {
             Formula f1 = new Formula("1.0 + 1.0");
             String f2 = "1.0 + 1.0";
             Assert.IsFalse(f1.Equals(f2));
+            Assert.AreNotEqual(f1.GetHashCode(), f2.GetHashCode());
         }
 
 
         [TestMethod()]
         public void _SimpleEquals2()
+        {
+            Formula f1 = new Formula("1000.0");
+            Formula f2 = new Formula("1000.000000000000000000000000000000000000000000000000000000002");
+            Assert.IsTrue(f1.Equals(f2));
+        }
+
+
+        [TestMethod()]
+        public void _SimpleEquals3()
         {
             Formula f1 = new Formula("1.0 + 1.0");
             Formula f2 = null;
@@ -37,7 +47,7 @@ namespace FormulaTests
         }
 
         [TestMethod()]
-        public void _SimpleEquals3()
+        public void _SimpleEquals4()
         {
             Formula f1 = new Formula("1.0 + 1.0");
             Formula f2 = new Formula("1.0 + 1.0");
@@ -178,19 +188,29 @@ namespace FormulaTests
         [TestMethod()]
         public void _Evaluate8()
         {
+            Formula f1 = new Formula("x1/x2+x1*x2+x3", s => s.ToLower(), s => s == "x2" || s == "x1" || s == "x3");
+            double val = (double)f1.Evaluate(x =>
+             {
+                 if (x == "x1")
+                 {
+                     return 1;
+                 }
+                 if (x == "x2")
+                     return 2;
+                 if (x == "x3")
+                     return 3;
+
+                 else throw new ArgumentException("can not find" + x);
+             });
+
+            Assert.AreEqual(5.5, val, 1e-9);
+        }
+
+        [TestMethod()]
+        public void _Evaluate9()
+        {
             Formula f1 = new Formula("x1/x2+x1*x2+x3", s => s.ToUpper(), s => s == "X2" || s == "X1" || s == "X3");
-            Assert.IsInstanceOfType(f1.Evaluate(x =>
-            {
-                if (x == "X1")
-                {
-                    return 1;
-                }
-                if (x == "X2")
-                    return 2;
-
-                else throw new ArgumentException("can not find" + x);
-            }), typeof(FormulaError));
-
+           
             var a = (FormulaError)f1.Evaluate(x =>
             {
                 if (x == "X1")
@@ -200,32 +220,39 @@ namespace FormulaTests
                 if (x == "X2")
                     return 2;
 
-                else throw new ArgumentException("can not find" + x);
+                else throw new ArgumentException("can not find " + x);
             });
+            Assert.IsInstanceOfType(a, typeof(FormulaError));
             Assert.IsNotNull(a.Reason);
+            Assert.AreEqual("can not find X3", a.Reason);
         }
 
-
-
-        // a1 = 1, a2 =304, a3 =32. Lookup 
-
-        //[TestMethod()]
-        //public void _Evaluate7()
-        //{
-        //    Formula f1 = new Formula("x1+x2+50", s => s.ToUpper(), s => s == "x2");
-        //    double val = (double)f1.Evaluate(x => 0);
-        //    Assert.AreEqual(6, val, 1e-9);
-        //}'
-        //{ <sequence-of-statements> }
-
         [TestMethod()]
-        public void _EvaluateDivideBy0()
+        public void _EvaluateDivideByZero()
         {
             Formula f1 = new Formula("1/0");
             Assert.IsInstanceOfType(f1.Evaluate(s => 0), typeof(FormulaError));
             var a = (FormulaError)f1.Evaluate(s => 0);
             Assert.IsNotNull(a.Reason);
- 
+            Assert.AreEqual("can not divide by 0", a.Reason);
+
+        }
+
+        public void _EvaluateDivideByZero2()
+        {
+            Formula f1 = new Formula("1/x1");
+            var a = (FormulaError)f1.Evaluate(x =>
+            {
+                if (x == "X1")
+                {
+                    return 1;
+                }
+                else throw new ArgumentException("can not find " + x);
+            });
+            Assert.IsInstanceOfType(a, typeof(FormulaError));
+            Assert.IsNotNull(a.Reason);
+            Assert.AreEqual("can not divide by 0", a.Reason);
+
         }
 
         [TestMethod()]
@@ -239,6 +266,22 @@ namespace FormulaTests
             String s2 = e.Current;
             Assert.IsFalse(e.MoveNext());
             Assert.IsTrue(((s1 == "x") && (s2 == "y")) || ((s1 == "y") && (s2 == "x")));
+        }
+
+
+        [TestMethod()]
+        public void _GetVariablesTest2()
+        {
+            Formula f1 = new Formula("x1+x2+x3+2", s => s.ToUpper(), s => s == "X1" || s == "X2" || s == "X3");
+            IEnumerator<string> e = f1.GetVariables().GetEnumerator();
+            Assert.IsTrue(e.MoveNext());
+            String s1 = e.Current;
+            Assert.IsTrue(e.MoveNext());
+            String s2 = e.Current;
+            Assert.IsTrue(e.MoveNext());
+            String s3 = e.Current;
+            Assert.IsFalse(e.MoveNext());
+            Assert.IsTrue(s1 == "X1" && s2 == "X2" && s3 == "X3");
         }
 
 

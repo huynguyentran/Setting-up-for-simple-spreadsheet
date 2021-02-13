@@ -16,6 +16,14 @@
 //  (Version 1.2) Changed the definition of equality with regards
 //                to numeric tokens
 
+// (Huy Nguyen / u1315096)
+// Version 1.5 (2/12/2021)
+
+// Change log:
+//  (Version 1.5) Implemented, and tested the Formula constructor 
+//                and the class' methods 
+ 
+
 
 using System;
 using System.Collections.Generic;
@@ -45,6 +53,7 @@ namespace SpreadsheetUtilities
     /// </summary>
     public class Formula
     {
+        //A private string that represents the valid formula after allowed from the constructor.
         private string validFormula;
         /// <summary>
         /// Creates a Formula from a string that consists of an infix expression written as
@@ -148,11 +157,7 @@ namespace SpreadsheetUtilities
                             throw new FormulaFormatException("Invalid variable returns by the noramlizer.");
                         }
 
-                        //FormulaFormatExcpetion
-
                         String normalizedVar = normalize(token);
-
-
 
                         if (!isValid(normalizedVar))
                         {
@@ -224,16 +229,17 @@ namespace SpreadsheetUtilities
 
 
 
-                //if (double.TryParse(token, out double number))
-                //{d
+
+                //The only thing left is number, so we check it down here.
                 double number = double.Parse(token);
                 String newDouble = number.ToString();
                 newString += newDouble;
                 prev = newDouble;
                 continue;
-                //}
+ 
             }
 
+            //The the number of parenthesises are not equal to each other
             if (leftPara != rightPara)
             {
                 throw new FormulaFormatException("There exists open parenthesis without an appropriate close parenthesis.");
@@ -242,6 +248,9 @@ namespace SpreadsheetUtilities
             validFormula = newString;
         }
 
+        /// <summary>
+        /// A private helper method to help check the first token of formula
+        /// </summary>
         private bool checkForFirst(string s)
         {
             String lpPattern = @"\(";
@@ -256,6 +265,9 @@ namespace SpreadsheetUtilities
             return false;
         }
 
+        /// <summary>
+        /// A private helper method to help check the last token of formula
+        /// </summary>
         private bool checkForLast(string s)
         {
             String rpPattern = @"\)";
@@ -318,13 +330,11 @@ namespace SpreadsheetUtilities
                             valueStack.Push(v);
                             continue;
                         }
-                        else
-                        {
+                   
                             valueStack.Push(number);
                             continue;
-                        }
+                        
                     }
-
 
                     if (t.Equals("+") || t.Equals("-"))
                     {
@@ -382,30 +392,17 @@ namespace SpreadsheetUtilities
                     {
                         if (operatorStack.IsOnTop("*") || operatorStack.IsOnTop("/"))
                         {
-
-
                             double v = Calculator(lookup(t), valueStack.Pop(), operatorStack.Pop());
                             valueStack.Push(v);
                             continue;
-
-
                         }
-                        else
-                        {
-                            //Else pushes the variable onto the value stack.
                             valueStack.Push(lookup(t));
-                        }
                     }
                 }
 
-
                 if (operatorStack.Count == 1)
                 {
-                    //if ((operatorStack.IsOnTop("+") || operatorStack.IsOnTop("-")) && valueStack.Count == 2)
-                    //{
-
                     return Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
-                    //}
                 }
 
                 return valueStack.Pop();
@@ -417,7 +414,9 @@ namespace SpreadsheetUtilities
 
         }
 
-
+        /// <summary>
+        /// A private helper method to perform simple calculation.
+        /// </summary>
         private static double Calculator(double val1, double val2, string op)
         {
             switch (op)
@@ -430,22 +429,22 @@ namespace SpreadsheetUtilities
                         throw new ArgumentException("can not divide by 0");
                     }
                     return val2 / val1;
-                //case "+":
-                //    return val2 + val1;
                 case "-":
                     return val2 - val1;
             }
+
             return val2 + val1;
         }
 
+        /// <summary>
+        /// A private helper method to verify if the token is a variable.
+        /// </summary>
         private static bool VariablesVerification(string v)
         {
-
             Regex regex = new Regex(@"[a-zA-Z_](?: [a-zA-Z_]|\d)*", RegexOptions.IgnorePatternWhitespace);
             bool boo = regex.IsMatch(v);
             return regex.IsMatch(v);
         }
-
 
 
 
