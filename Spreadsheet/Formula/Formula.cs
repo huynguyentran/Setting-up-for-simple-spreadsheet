@@ -98,6 +98,8 @@ namespace SpreadsheetUtilities
                 throw new FormulaFormatException("There are less than one token in the formula.");
             }
 
+            //Pattern for the tokens
+
             String lpPattern = @"\(";
             String rpPattern = @"\)";
             String opPattern = @"[\+\-*/]";
@@ -105,7 +107,7 @@ namespace SpreadsheetUtilities
             String doublePattern = @"(?: \d+\.\d* | \d*\.\d+ | \d+ ) (?: [eE][\+-]?\d+)?";
             String spacePattern = @"\s+";
             String pattern = String.Format("({0}) | ({1}) | ({2}) | ({3}) | ({4}) | ({5})",
-                                            lpPattern, rpPattern, opPattern, varPattern, doublePattern, spacePattern);
+                                    lpPattern, rpPattern, opPattern, varPattern, doublePattern, spacePattern);
 
             if (checkForFirst(Formula.GetTokens(formula).First()) == false)
             {
@@ -222,6 +224,16 @@ namespace SpreadsheetUtilities
                     {
                         throw new FormulaFormatException("Variables are not allowed by the validation.");
                     }
+
+                    //In case of the number is in the form of 1e10.
+                    if (double.TryParse(token, out double someNumber))
+                    {
+                        String newNumber = someNumber.ToString();
+                        newString += newNumber;
+                        prev = newNumber;
+                        continue;
+                    }
+
                     prev = normalizedVar;
                     newString += normalizedVar;
                     continue;
@@ -372,12 +384,7 @@ namespace SpreadsheetUtilities
                             double v = Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
                             valueStack.Push(v);
                         }
-
-
                         operatorStack.Pop();
-
-
-
                         if (operatorStack.IsOnTop("*") || operatorStack.IsOnTop("/"))
                         {
 
@@ -413,6 +420,7 @@ namespace SpreadsheetUtilities
             }
 
         }
+
 
         /// <summary>
         /// A private helper method to perform simple calculation.
