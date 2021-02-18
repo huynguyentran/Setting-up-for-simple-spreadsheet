@@ -11,6 +11,7 @@ namespace SS
     {
         private Dictionary<string, Cell> spreadsheet;
         private DependencyGraph graph;
+
         public override object GetCellContents(string name)
         {
             if (!nameValidation(name))
@@ -30,24 +31,15 @@ namespace SS
                 return (double)spreadsheet[name].getContent();
             }
 
+
             return (string)spreadsheet[name].getContent();
             // throw new NotImplementedException();
         }
 
         public override IEnumerable<string> GetNamesOfAllNonemptyCells()
         {
-
-            //List<string> nonEmptyCells = new List<string>();
-
-            //foreach (KeyValuePair<string, Cell> entry in spreadsheet)
-            //{
-            //    //if (!spreadsheet[entry.Key].Equals(""))
-            //    //{
-            //        nonEmptyCells.Add(entry.Key);
-            //   // }
-            //}
-            //Remove every empty cell 
             return new List<string>(spreadsheet.Keys);
+
         }
 
         public override IList<string> SetCellContents(string name, double number)
@@ -56,88 +48,137 @@ namespace SS
             {
                 throw new InvalidNameException();
             }
-           
-            spreadsheet[name].setContent(number);
+
+
+            if (spreadsheet.ContainsKey(name))
+            {
+                if (spreadsheet[name].GetType() == typeof(Formula) && graph.HasDependents(name))
+                {
+                    graph.ReplaceDependents(name, new HashSet<string>());
+                }
+                spreadsheet[name].setContent(number);
+            }
+            else
+            {
+                spreadsheet.Add(name, new Cell(number));
+            }
+
 
             return new List<string>(GetCellsToRecalculate(name));
-
-            //HashSet<string> list = new HashSet<string>();
-            //list.Add(name);
-            //list.Union(graph.GetDependents(name));
-            //foreach(string e in graph.GetDependents(name))
-            //{
-            //    list.Union(graph.GetDependents(e));
-            //}
-            //return new List<string>(list);
-            // throw new NotImplementedException();
         }
 
         public override IList<string> SetCellContents(string name, string text)
         {
-
+            if (text is null)
+            {
+                throw new ArgumentNullException();
+            }
 
             if (!nameValidation(name))
             {
                 throw new InvalidNameException();
             }
 
-            //if (text.Equals(""))
-            //{
-            //    spreadsheet[name].setContent(text);
-            //    spreadsheet.Remove(name);
-            //    HashSet<string> list2 = new HashSet<string>();
+            if (spreadsheet.ContainsKey(name))
+            {
+                if (spreadsheet[name].GetType() == typeof(Formula) && graph.HasDependents(name))
+                {
+                    graph.ReplaceDependents(name, new HashSet<string>());
+                    //if (spreadsheet.ContainsKey(text))
+                    //{
+                    //    graph.AddDependency(name, text);
+                    //    //Check for circular here
+                    //}
 
-            //    list2.Add(name);
+                }
+                spreadsheet[name].setContent(text);
+            }
 
-            //    list2.Union(graph.GetDependents(name));
+            else
+            {
+                spreadsheet.Add(name, new Cell(text));
+                //if (nameValidation(text))
+                //{
+                //    if ((spreadsheet[name].getContent().Equals("")))
+                //    {
+                //        spreadsheet.Add(text, null);
+                //    }
+                //    graph.AddDependency(name, text);
 
-            //    foreach (string e in graph.GetDependents(name))
-            //    {
-            //        list2.Union(graph.GetDependents(e));
-            //    }
-            //    return new List<string>(list2);
-            //}
-
-            spreadsheet[name].setContent(text);
+                //}
+            }
 
             return new List<string>(GetCellsToRecalculate(name));
-
-            //HashSet<string> list = new HashSet<string>();
-            //list.Add(name);
-            //list.Union(graph.GetDependents(name));
-            //foreach (string e in graph.GetDependents(name))
-            //{
-            //    list.Union(graph.GetDependents(e));
-            //}
-            //return new List<string>(list);
-            // throw new NotImplementedException();
         }
 
         public override IList<string> SetCellContents(string name, Formula formula)
         {
+            if (formula is null)
+            {
+                throw new ArgumentNullException();
+            }
 
             if (!nameValidation(name))
             {
                 throw new InvalidNameException();
             }
 
-            spreadsheet[name].setContent(formula);
-            return new List<string>(GetCellsToRecalculate(name));
+            //Checking circular.
+            foreach (string token in Formula.GetTokens(formula))
+            {
+                if (nameValidation(token))
+                {
+                    if (token.Equals(name) || GetCellsToRecalculate(token).Contains(name))
+                    {
+                        throw new CircularException();
+                    }
+                }
+            }
 
-            //if (formula.ToString().Contains(name))
-            //{
-            //    graph.AddDependency(name, formula.ToString);
-            //}
-            //spreadsheet[name].setContent(formula);
-            //HashSet<string> list = new HashSet<string>();
-            //list.Add(name);
-            //list.Union(GetDirectDependents(name));
-            //foreach (string e in graph.GetDependents(name))
-            //{
-            //    list.Union(GetDirectDependents(e));
-            //}
-            //return new List<string>(list);
-            // throw new NotImplementedException();
+
+            if (spreadsheet.ContainsKey(name))
+            {
+                if (spreadsheet[name].GetType() == typeof(Formula) && graph.HasDependents(name))
+                {
+                    graph.ReplaceDependents(name, new HashSet<string>());
+                }
+                
+                foreach (string token in Formula.GetTokens(formula))
+                {
+                    if (nameValidation(token))
+                    {
+                        //Do we actually need this ?
+                        if (!spreadsheet.ContainsKey(token))
+                        {
+                            spreadsheet.Add(token, null);
+                        }
+                        graph.AddDependency(name, token);
+                      
+                    }
+                }
+
+                spreadsheet[name].setContent(formula);
+
+            }
+            else
+            {
+                spreadsheet.Add(name, new Cell(formula));
+                foreach (string token in Formula.GetTokens(formula))
+                {
+                    if (nameValidation(token))
+                    {
+                        //Do we actually need this ?
+                        if (!spreadsheet.ContainsKey(token))
+                        {
+                            spreadsheet.Add(token, null);
+                        }
+                        graph.AddDependency(name, token);
+
+                    }
+                }
+            }
+
+            return new List<string>(GetCellsToRecalculate(name));
         }
 
         protected override IEnumerable<string> GetDirectDependents(string name)
@@ -148,7 +189,7 @@ namespace SS
                 throw new InvalidNameException();
             }
             return graph.GetDependents(name);
-          //  throw new NotImplementedException();
+            //  throw new NotImplementedException();
         }
 
 
@@ -179,6 +220,7 @@ namespace SS
         }
         public Cell(Object _content)
         {
+
             content = _content;
             //   value = _value;
         }
