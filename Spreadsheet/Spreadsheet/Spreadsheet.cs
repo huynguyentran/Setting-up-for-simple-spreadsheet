@@ -9,6 +9,7 @@ namespace SS
 {
     public class Spreadsheet : AbstractSpreadsheet
     {
+
         private Dictionary<string, Cell> spreadsheet;
         private DependencyGraph graph;
 
@@ -84,11 +85,18 @@ namespace SS
                 if (spreadsheet[name].GetType() == typeof(Formula) && graph.HasDependents(name))
                 {
                     graph.ReplaceDependents(name, new HashSet<string>());
-                    //if (spreadsheet.ContainsKey(text))
-                    //{
-                    //    graph.AddDependency(name, text);
-                    //    //Check for circular here
-                    //}
+                   
+                    //Do we need to check for this
+                    if (nameValidation(text))
+                    {
+                        //Check circular 
+                        if (GetCellsToRecalculate(text).Contains(name))
+                        {
+                          throw new CircularException();
+                        }
+                        graph.AddDependency(name, text);
+                    }
+
 
                 }
                 spreadsheet[name].setContent(text);
@@ -97,15 +105,11 @@ namespace SS
             else
             {
                 spreadsheet.Add(name, new Cell(text));
-                //if (nameValidation(text))
-                //{
-                //    if ((spreadsheet[name].getContent().Equals("")))
-                //    {
-                //        spreadsheet.Add(text, null);
-                //    }
-                //    graph.AddDependency(name, text);
+                if (nameValidation(text))
+                {
+                    graph.AddDependency(name, text);
 
-                //}
+                }
             }
 
             return new List<string>(GetCellsToRecalculate(name));
@@ -123,17 +127,14 @@ namespace SS
                 throw new InvalidNameException();
             }
 
-            //Checking circular.
-            foreach (string token in Formula.GetTokens(formula))
-            {
-                if (nameValidation(token))
-                {
-                    if (token.Equals(name) || GetCellsToRecalculate(token).Contains(name))
-                    {
-                        throw new CircularException();
-                    }
-                }
-            }
+            ////Checking circular.
+            //foreach (string token in formula.GetVariables())
+            //{
+            //    if (token.Equals(name) || GetCellsToRecalculate(token).Contains(name))
+            //    {
+            //        throw new CircularException();
+            //    }
+            //}
 
 
             if (spreadsheet.ContainsKey(name))
@@ -142,39 +143,43 @@ namespace SS
                 {
                     graph.ReplaceDependents(name, new HashSet<string>());
                 }
-                
-                foreach (string token in Formula.GetTokens(formula))
+
+                foreach (string token in formula.GetVariables())
                 {
-                    if (nameValidation(token))
+                    if (token.Equals(name) || GetCellsToRecalculate(token).Contains(name))
                     {
-                        //Do we actually need this ?
-                        if (!spreadsheet.ContainsKey(token))
-                        {
-                            spreadsheet.Add(token, null);
-                        }
-                        graph.AddDependency(name, token);
-                      
+                        throw new CircularException();
                     }
+
+                    ////Do we actually need this ?
+                    //if (!spreadsheet.ContainsKey(token))
+                    //{
+                    //    spreadsheet.Add(token, null);
+                    //}
+                    graph.AddDependency(name, token);
+
+
                 }
 
                 spreadsheet[name].setContent(formula);
 
             }
+
             else
             {
                 spreadsheet.Add(name, new Cell(formula));
-                foreach (string token in Formula.GetTokens(formula))
+                foreach (string token in formula.GetVariables())
                 {
-                    if (nameValidation(token))
+                    if (token.Equals(name) || GetCellsToRecalculate(token).Contains(name))
                     {
-                        //Do we actually need this ?
-                        if (!spreadsheet.ContainsKey(token))
-                        {
-                            spreadsheet.Add(token, null);
-                        }
-                        graph.AddDependency(name, token);
-
+                        throw new CircularException();
                     }
+                    //Do we actually need this ?
+                    //if (!spreadsheet.ContainsKey(token))
+                    //{
+                    //    spreadsheet.Add(token, null);
+                    //}
+                    graph.AddDependency(name, token);
                 }
             }
 
@@ -232,6 +237,15 @@ namespace SS
                 return "";
             }
             return content;
+        }
+
+        public bool isEmpty()
+        {
+            if (content is null || content.Equals(""))
+            {
+                return true;
+            }
+            return false;
         }
 
         public void setContent(object obj)
