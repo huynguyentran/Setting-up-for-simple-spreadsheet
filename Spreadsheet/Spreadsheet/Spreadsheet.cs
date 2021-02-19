@@ -2,6 +2,8 @@
 // 2/19/2021
 // PS4 3500
 
+// Implementing methods for AbstractSpreadsheet to create afunctional spreadsheet.
+
 using SpreadsheetUtilities;
 using System;
 using System.Collections.Generic;
