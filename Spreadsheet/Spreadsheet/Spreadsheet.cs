@@ -1,4 +1,8 @@
-﻿using SpreadsheetUtilities;
+﻿// Huy Nguyen (u1315096) 
+// 2/19/2021
+// PS4 3500
+
+using SpreadsheetUtilities;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -13,6 +17,17 @@ namespace SS
         private Dictionary<string, Cell> spreadsheet = new Dictionary<string, Cell>();
         private DependencyGraph graph = new DependencyGraph();
 
+        /// <summary>
+        /// A method that sets the conent of the named Cell to a double.
+        /// The method returns a list consisting of name plus the names of 
+        /// all other cells whose value depends, directly or indirectly, on 
+        /// the named cell.
+        /// 
+        /// </summary>
+        /// <param name="name">The string cell name</param>
+        /// <param name="number">The dobule content</param>
+        /// <throw> InvalidNameException() if the name is not valid.</throw>
+        /// <returns>A list of name that depended directly and indirectly on the named Cell.</returns>
         public override object GetCellContents(string name)
         {
             if (!nameValidation(name))
@@ -30,12 +45,28 @@ namespace SS
 
         }
 
+        /// <summary>
+        /// A method that returns the list of name of non-empty cells in the spreadsheet.
+        /// 
+        /// </summary>
+        /// <returns>A list of name of non-empty cells in the spreadsheet.</return>
         public override IEnumerable<string> GetNamesOfAllNonemptyCells()
         {
             return new List<string>(spreadsheet.Keys);
 
         }
 
+        /// <summary>
+        /// A method that sets the conent of the named Cell to a double.
+        /// The method returns a list consisting of name plus the names of 
+        /// all other cells whose value depends, directly or indirectly, on 
+        /// the named cell.
+        /// 
+        /// </summary>
+        /// <param name="name">The string cell name</param>
+        /// <param name="number">The dobule content</param>
+        /// <throw> InvalidNameException() if the name is not valid.</throw>
+        /// <returns>A list of name that depended directly and indirectly on the named Cell.</returns>
         public override IList<string> SetCellContents(string name, double number)
         {
             if (!nameValidation(name))
@@ -61,7 +92,18 @@ namespace SS
             return new List<string>(GetCellsToRecalculate(name));
         }
 
-        //text = "a1"
+        /// <summary>
+        /// A method that sets the conent of the named Cell to a string.
+        /// The method returns a list consisting of name plus the names of 
+        /// all other cells whose value depends, directly or indirectly, on 
+        /// the named cell.
+        /// 
+        /// </summary>
+        /// <param name="name">The string cell name</param>
+        /// <param name="text">The string content</param>
+        /// <throw> InvalidNameException() if the name is not valid.</throw>
+        /// <throw> ArgumentNullException() if the text is null.</throw>
+        /// <returns>A list of name that depended directly and indirectly on the named Cell.</returns>
         public override IList<string> SetCellContents(string name, string text)
         {
 
@@ -74,8 +116,6 @@ namespace SS
             {
                 throw new InvalidNameException();
             }
-
-
 
             if (spreadsheet.ContainsKey(name))
             {
@@ -101,9 +141,21 @@ namespace SS
             return new List<string>(GetCellsToRecalculate(name));
         }
 
+        /// <summary>
+        /// A method that sets the conent of the named Cell to a Formula.
+        /// The method returns a list consisting of name plus the names of 
+        /// all other cells whose value depends, directly or indirectly, on 
+        /// the named cell.
+        /// 
+        /// </summary>
+        /// <param name="name">The string cell name</param>
+        /// <param name="Formula">The Formula content</param>
+        /// <throw> ArgumentNullException() if the text is null.</throw>
+        /// <throw> CircularException() if the Formula creates Circular.</throw>
+        /// <returns>A list of name that depended directly and indirectly on the named Cell.</returns>
         public override IList<string> SetCellContents(string name, Formula formula)
         {
-          
+
             if (formula is null)
             {
                 throw new ArgumentNullException();
@@ -154,29 +206,39 @@ namespace SS
                 {
                     SetCellContents(name, (double)original);
                 }
-                else 
+                else
                 {
                     SetCellContents(name, (Formula)original);
                 }
-         
+
                 throw new CircularException();
             }
 
         }
 
-        
+        /// <summary>
+        /// A protected method to get direct dependents.
+        /// 
+        /// </summary>
+        /// <param name="name">The cell name</param>
+        /// <returns>A list of dependents.</returns>
         protected override IEnumerable<string> GetDirectDependents(string name)
         {
             return graph.GetDependents(name);
         }
 
 
-
+        /// <summary>
+        /// A private method to validiate the name of the cell. Returns true if 
+        /// the name is valid. Otherwises return false. 
+        /// 
+        /// </summary>
+        /// <param name="name">The cell name</param>
+        /// <returns>true/false.</returns>
         private bool nameValidation(string name)
         {
             String varPattern = @"^[a-zA-Z_](?: [a-zA-Z_]|\d)*$";
             Regex regVar = new Regex(varPattern, RegexOptions.IgnorePatternWhitespace);
-           
             if (!regVar.IsMatch(name) || name is null)
             {
                 return false;
@@ -186,50 +248,61 @@ namespace SS
     }
 
 
+
+    /// <summary>
+    /// A class represented a Cell that holds a content object. 
+    /// 
+    /// </summary>
     class Cell
     {
 
-        public object content;
-        // public double value;
+        private object content;
 
-        //public Cell()
-        //{
-        //    content = null;
-        //}
+        /// <summary>
+        /// A constructor to initializing the cell.
+        /// 
+        /// </summary>
+        /// <param name="_content">The object content(Formula)</param>
         public Cell(Formula _content)
         {
             content = _content;
-            //   value = _value;
         }
+
+        /// <summary>
+        /// A constructor to initializing the cell.
+        /// 
+        /// </summary>
+        /// <param name="_content">The object content(string)</param>
         public Cell(string _content)
         {
             content = _content;
-            //   value = _value;
         }
+
+        /// <summary>
+        /// A constructor to initializing the cell.
+        /// 
+        /// </summary>
+        /// <param name="_content">The object content(double)</param>
         public Cell(double _content)
         {
             content = _content;
-            //   value = _value;
         }
 
+        /// <summary>
+        /// A constructor to initializing the cell.
+        /// 
+        /// </summary>
+        /// <returns>The content of the cell.</returns>
         public object getContent()
         {
-            //if (content is null)
-            //{
-            //    return "";
-            //}
             return content;
         }
 
-        //public bool isEmpty()
-        //{
-        //    if (content is null || content.Equals(""))
-        //    {
-        //        return true;
-        //    }
-        //    return false;
-        //}
-
+        /// <summary>
+        /// A method to change the content of a cell. 
+        /// 
+        /// </summary>
+        /// <param name="_content">The object content(object)</param>
         public void setContent(object obj)
         {
             content = obj;

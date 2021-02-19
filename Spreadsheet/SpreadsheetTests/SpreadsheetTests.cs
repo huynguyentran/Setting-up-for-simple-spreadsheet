@@ -1,3 +1,7 @@
+// Huy Nguyen (u1315096) 
+// 2/19/2021
+// PS4 3500 
+
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SpreadsheetUtilities;
 using System.Collections.Generic;
@@ -297,7 +301,6 @@ namespace SS
         }
 
         [TestMethod]
-        //[ExpectedException(typeof(CircularException))]
         public void TestSetCellContentFormulaThrow3()
         {
             AbstractSpreadsheet sheet = new Spreadsheet();
@@ -405,8 +408,29 @@ namespace SS
             CollectionAssert.AreEqual(expectedList, actualList);
             CollectionAssert.AreEquivalent(expectedList, new List<string>(sheet.SetCellContents("a999", 1)));
             Assert.AreEqual(1000, actualList.Count);
-
         }
 
+        [TestMethod]
+        public void DependencyTest2()
+        {
+            AbstractSpreadsheet sheet = new Spreadsheet();
+            Formula f1 = new Formula("a1+1");
+            List<string> expected = new List<string>();
+            expected.Add("a1");
+            expected.Add("b1");
+            sheet.SetCellContents("b1", f1);
+            CollectionAssert.AreEquivalent(expected,new List<string>(sheet.SetCellContents("a1", 1)));
+            Formula f2 = new Formula("c1+1");
+            sheet.SetCellContents("b1", f2);
+            expected.Remove("b1");
+            CollectionAssert.AreEquivalent(expected, new List<string>(sheet.SetCellContents("a1", 1)));
+
+            List<string> expected2 = new List<string>();
+            expected2.Add("c1");
+            expected2.Add("b1");
+            CollectionAssert.AreEquivalent(expected2, new List<string>(sheet.SetCellContents("c1", 1)));
+
+
+        }
     }
 }

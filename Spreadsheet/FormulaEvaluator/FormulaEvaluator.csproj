@@ -4,8 +4,6 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\FormulaTests\FormulaTests.csproj" />
-  </ItemGroup>
+
 
 </Project>
