@@ -121,9 +121,6 @@ namespace SS
             expectedList.Add("a1");
             CollectionAssert.AreEqual(expectedList, list);
             Assert.AreEqual(f1, sheet.GetCellContents("a1"));
-            /*   a1   a2
-             *  a2+2
-             */
 
             List<string> list2 = new List<string>(sheet.SetCellContents("a1", f1));
             CollectionAssert.AreEqual(expectedList, list2);
@@ -348,6 +345,67 @@ namespace SS
                 Formula f1 = new Formula("a2+1");
                 Assert.AreEqual(f1, sheet.GetCellContents("a1"));
             }
+        }
+
+        [TestMethod]
+        public void TestComplexityDependency()
+        {
+            AbstractSpreadsheet sheet = new Spreadsheet();
+            Formula f1 = new Formula("b+1");
+            Formula f2 = new Formula("c+1");
+            Formula f3 = new Formula("d+1");
+            Formula f4 = new Formula("e+1");
+            Formula f5 = new Formula("e1+1");
+            sheet.SetCellContents("a", f1);
+            sheet.SetCellContents("b", f2);
+            sheet.SetCellContents("c", f3);
+            sheet.SetCellContents("d", f4);
+            sheet.SetCellContents("e", f5);
+
+            List<string> expected =new List<string>();
+            expected.Add("a");
+            CollectionAssert.AreEquivalent(expected, new List<string>(sheet.SetCellContents("a", f1)));
+            expected.Add("b");
+            CollectionAssert.AreEquivalent(expected, new List<string>(sheet.SetCellContents("b", f2)));
+            expected.Add("c");
+            CollectionAssert.AreEquivalent(expected, new List<string>(sheet.SetCellContents("c", f3)));
+            expected.Add("d");
+            CollectionAssert.AreEquivalent(expected, new List<string>(sheet.SetCellContents("d", f4)));
+            expected.Add("e");
+            CollectionAssert.AreEquivalent(expected, new List<string>(sheet.SetCellContents("e",f5)));
+            try
+            {
+                Formula f6 = new Formula("a+1");
+                sheet.SetCellContents("e", f6);
+            }
+            catch
+            {
+                Assert.AreEqual(f5, sheet.GetCellContents("e"));
+                CollectionAssert.AreEquivalent(expected, new List<string>(sheet.SetCellContents("e", f5)));
+                expected.Add("a");
+                CollectionAssert.AreNotEquivalent(expected, new List<string>(sheet.SetCellContents("e", f5)));
+            }
+
+        }
+
+
+        [TestMethod]
+        public void DependencyTest()
+        {
+            AbstractSpreadsheet sheet = new Spreadsheet();
+            int size = 1000;
+            List<string> expectedList = new List<string>();
+            for (int i = 0; i < size; i++)
+            {
+                int j = i + 1;
+                sheet.SetCellContents("a" + i, new Formula("a"+ j + " + 1"));
+                expectedList.Add("a" + i);
+            }
+            List<string> actualList = new List<string>(sheet.GetNamesOfAllNonemptyCells());
+            CollectionAssert.AreEqual(expectedList, actualList);
+            CollectionAssert.AreEquivalent(expectedList, new List<string>(sheet.SetCellContents("a999", 1)));
+            Assert.AreEqual(1000, actualList.Count);
+
         }
 
     }

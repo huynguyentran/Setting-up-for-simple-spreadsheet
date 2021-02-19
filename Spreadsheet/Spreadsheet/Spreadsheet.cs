@@ -61,6 +61,7 @@ namespace SS
             return new List<string>(GetCellsToRecalculate(name));
         }
 
+        //text = "a1"
         public override IList<string> SetCellContents(string name, string text)
         {
 
@@ -102,7 +103,7 @@ namespace SS
 
         public override IList<string> SetCellContents(string name, Formula formula)
         {
-            //Do we need this because formula already throws null.
+          
             if (formula is null)
             {
                 throw new ArgumentNullException();
