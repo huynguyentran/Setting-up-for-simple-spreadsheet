@@ -181,7 +181,7 @@ namespace FormulaEvaluator
             {
                 if ((operatorStack.IsOnTop("+") || operatorStack.IsOnTop("-")) && valueStack.Count==2)
                 {
-                    //stackThrowLessThan2(valueStack.Count);
+              
                     return Calculator(valueStack.Pop(), valueStack.Pop(), operatorStack.Pop());
                 }
 
