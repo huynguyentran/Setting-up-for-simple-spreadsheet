@@ -185,8 +185,6 @@ namespace SS
             AbstractSpreadsheet sheet = new Spreadsheet();
             string s = null;
             sheet.SetCellContents("_12312asd23", s);
-
-
         }
 
         [TestMethod]
@@ -238,7 +236,7 @@ namespace SS
         }
 
         [TestMethod]
-        public void TestSetCellContentSimppleDependency()
+        public void TestSetCellContentSimpleDependency()
         {
             AbstractSpreadsheet sheet = new Spreadsheet();
             Formula f1 = new Formula("b1+1");
@@ -267,6 +265,89 @@ namespace SS
             CollectionAssert.AreEquivalent(expectedList, list2);
             CollectionAssert.AreEquivalent(expectedList2, list3);
             CollectionAssert.AreEquivalent(expectedList3, list4);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(InvalidNameException))]
+        public void TestSetCellContentFormulaThrow()
+        {
+            AbstractSpreadsheet sheet = new Spreadsheet();
+            Formula f1 = new Formula("A1+b2+_c3");
+            sheet.SetCellContents("_2%!@", f1);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void TestSetCellContentFormulaThrow2()
+        {
+            AbstractSpreadsheet sheet = new Spreadsheet();
+            Formula f1 = null;
+            sheet.SetCellContents("_", f1);
+        }
+
+        [TestMethod]
+        public void TestSetCellContentFormulaReplaceOtherFormula()
+        {
+            AbstractSpreadsheet sheet = new Spreadsheet();
+            sheet.SetCellContents("a1", "b");
+            Formula f1 = new Formula("a2+3");
+            List<string> list = new List<string>(sheet.SetCellContents("a1", f1));
+            List<string> expected = new List<string>();
+            expected.Add("a1");
+            expected.Add("a2");
+            List<string> list2 = new List<string>(sheet.SetCellContents("a2", 1));
+            CollectionAssert.AreEquivalent(expected, list2);
+        }
+
+        [TestMethod]
+        //[ExpectedException(typeof(CircularException))]
+        public void TestSetCellContentFormulaThrow3()
+        {
+            AbstractSpreadsheet sheet = new Spreadsheet();
+            try
+            {
+               
+                sheet.SetCellContents("a1", "f");
+                Formula f1 = new Formula("a1+3");
+                sheet.SetCellContents("a1", f1);
+            }
+            catch(CircularException)
+            {
+                Assert.AreEqual("f", sheet.GetCellContents("a1"));
+            }
+
+            try
+            {
+                sheet.SetCellContents("a1", "");
+                Formula f1 = new Formula("a1+3");
+                sheet.SetCellContents("a1", f1);
+            }
+            catch (CircularException)
+            {
+                Assert.AreEqual("", sheet.GetCellContents("a1"));
+            }
+            try
+            {
+                sheet.SetCellContents("a1", 20);
+                Formula f1 = new Formula("a1+3");
+                sheet.SetCellContents("a1", f1);
+            }
+            catch (CircularException)
+            {
+                Assert.AreEqual(20.0, sheet.GetCellContents("a1"));
+            }
+            try
+            {
+                Formula f1 = new Formula("a2+1");
+                sheet.SetCellContents("a1",f1);
+                Formula f2 = new Formula("a1+3");
+                sheet.SetCellContents("a1", f2);
+            }
+            catch (CircularException)
+            {
+                Formula f1 = new Formula("a2+1");
+                Assert.AreEqual(f1, sheet.GetCellContents("a1"));
+            }
         }
 
     }

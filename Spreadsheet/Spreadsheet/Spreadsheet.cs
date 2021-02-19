@@ -102,6 +102,7 @@ namespace SS
 
         public override IList<string> SetCellContents(string name, Formula formula)
         {
+            //Do we need this because formula already throws null.
             if (formula is null)
             {
                 throw new ArgumentNullException();
@@ -152,14 +153,11 @@ namespace SS
                 {
                     SetCellContents(name, (double)original);
                 }
-                else if (original.GetType() == typeof(Formula))
+                else 
                 {
                     SetCellContents(name, (Formula)original);
                 }
-                else
-                {
-                    SetCellContents(name, "");
-                }
+         
                 throw new CircularException();
             }
 
@@ -168,11 +166,6 @@ namespace SS
         
         protected override IEnumerable<string> GetDirectDependents(string name)
         {
-
-            if (!nameValidation(name))
-            {
-                throw new InvalidNameException();
-            }
             return graph.GetDependents(name);
         }
 
@@ -198,10 +191,10 @@ namespace SS
         public object content;
         // public double value;
 
-        public Cell()
-        {
-            content = null;
-        }
+        //public Cell()
+        //{
+        //    content = null;
+        //}
         public Cell(Formula _content)
         {
             content = _content;
@@ -220,21 +213,21 @@ namespace SS
 
         public object getContent()
         {
-            if (content is null)
-            {
-                return "";
-            }
+            //if (content is null)
+            //{
+            //    return "";
+            //}
             return content;
         }
 
-        public bool isEmpty()
-        {
-            if (content is null || content.Equals(""))
-            {
-                return true;
-            }
-            return false;
-        }
+        //public bool isEmpty()
+        //{
+        //    if (content is null || content.Equals(""))
+        //    {
+        //        return true;
+        //    }
+        //    return false;
+        //}
 
         public void setContent(object obj)
         {
