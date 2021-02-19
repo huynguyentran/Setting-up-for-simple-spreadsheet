@@ -10,8 +10,8 @@ namespace SS
     public class Spreadsheet : AbstractSpreadsheet
     {
 
-        private Dictionary<string, Cell> spreadsheet;
-        private DependencyGraph graph;
+        private Dictionary<string, Cell> spreadsheet = new Dictionary<string, Cell>();
+        private DependencyGraph graph = new DependencyGraph();
 
         public override object GetCellContents(string name)
         {
@@ -20,21 +20,14 @@ namespace SS
                 throw new InvalidNameException();
             }
 
-            if (spreadsheet[name].GetType() == typeof(Formula))
+            if (!spreadsheet.ContainsKey(name))
             {
-
-                return (Formula)spreadsheet[name].getContent();
+                return "";
             }
 
-            if (spreadsheet[name].GetType() == typeof(double))
-            {
-
-                return (double)spreadsheet[name].getContent();
-            }
+            return spreadsheet[name].getContent();
 
 
-            return (string)spreadsheet[name].getContent();
-            // throw new NotImplementedException();
         }
 
         public override IEnumerable<string> GetNamesOfAllNonemptyCells()
@@ -53,10 +46,11 @@ namespace SS
 
             if (spreadsheet.ContainsKey(name))
             {
-                if (spreadsheet[name].GetType() == typeof(Formula) && graph.HasDependents(name))
+                if (spreadsheet[name].getContent().GetType() == typeof(Formula) && graph.HasDependees(name))
                 {
-                    graph.ReplaceDependents(name, new HashSet<string>());
+                    graph.ReplaceDependees(name, new HashSet<string>());
                 }
+
                 spreadsheet[name].setContent(number);
             }
             else
@@ -64,12 +58,12 @@ namespace SS
                 spreadsheet.Add(name, new Cell(number));
             }
 
-
             return new List<string>(GetCellsToRecalculate(name));
         }
 
         public override IList<string> SetCellContents(string name, string text)
         {
+
             if (text is null)
             {
                 throw new ArgumentNullException();
@@ -80,23 +74,13 @@ namespace SS
                 throw new InvalidNameException();
             }
 
+
+
             if (spreadsheet.ContainsKey(name))
             {
-                if (spreadsheet[name].GetType() == typeof(Formula) && graph.HasDependents(name))
+                if (spreadsheet[name].getContent().GetType() == typeof(Formula) && graph.HasDependees(name))
                 {
-                    graph.ReplaceDependents(name, new HashSet<string>());
-                   
-                    //Do we need to check for this
-                    if (nameValidation(text))
-                    {
-                        //Check circular 
-                        if (GetCellsToRecalculate(text).Contains(name))
-                        {
-                          throw new CircularException();
-                        }
-                        graph.AddDependency(name, text);
-                    }
-
+                    graph.ReplaceDependees(name, new HashSet<string>());
 
                 }
                 spreadsheet[name].setContent(text);
@@ -105,11 +89,12 @@ namespace SS
             else
             {
                 spreadsheet.Add(name, new Cell(text));
-                if (nameValidation(text))
-                {
-                    graph.AddDependency(name, text);
 
-                }
+            }
+
+            if (text.Equals(""))
+            {
+                spreadsheet.Remove(name);
             }
 
             return new List<string>(GetCellsToRecalculate(name));
@@ -127,65 +112,60 @@ namespace SS
                 throw new InvalidNameException();
             }
 
-            ////Checking circular.
-            //foreach (string token in formula.GetVariables())
-            //{
-            //    if (token.Equals(name) || GetCellsToRecalculate(token).Contains(name))
-            //    {
-            //        throw new CircularException();
-            //    }
-            //}
-
+            object original = GetCellContents(name);
 
             if (spreadsheet.ContainsKey(name))
             {
-                if (spreadsheet[name].GetType() == typeof(Formula) && graph.HasDependents(name))
+                if (spreadsheet[name].getContent().GetType() == typeof(Formula) && graph.HasDependees(name))
                 {
-                    graph.ReplaceDependents(name, new HashSet<string>());
-                }
-
-                foreach (string token in formula.GetVariables())
-                {
-                    if (token.Equals(name) || GetCellsToRecalculate(token).Contains(name))
-                    {
-                        throw new CircularException();
-                    }
-
-                    ////Do we actually need this ?
-                    //if (!spreadsheet.ContainsKey(token))
-                    //{
-                    //    spreadsheet.Add(token, null);
-                    //}
-                    graph.AddDependency(name, token);
-
-
+                    graph.ReplaceDependees(name, new HashSet<string>());
                 }
 
                 spreadsheet[name].setContent(formula);
 
+                foreach (string token in formula.GetVariables())
+                {
+                    graph.AddDependency(token, name);
+                }
             }
-
             else
             {
                 spreadsheet.Add(name, new Cell(formula));
                 foreach (string token in formula.GetVariables())
                 {
-                    if (token.Equals(name) || GetCellsToRecalculate(token).Contains(name))
-                    {
-                        throw new CircularException();
-                    }
-                    //Do we actually need this ?
-                    //if (!spreadsheet.ContainsKey(token))
-                    //{
-                    //    spreadsheet.Add(token, null);
-                    //}
-                    graph.AddDependency(name, token);
+                    graph.AddDependency(token, name);
                 }
             }
+            try
+            {
+                IEnumerable<string> list = GetCellsToRecalculate(name);
+                return new List<string>(list);
+            }
+            catch
+            {
 
-            return new List<string>(GetCellsToRecalculate(name));
+                if (original.GetType() == typeof(string))
+                {
+                    SetCellContents(name, (string)original);
+                }
+                else if (original.GetType() == typeof(double))
+                {
+                    SetCellContents(name, (double)original);
+                }
+                else if (original.GetType() == typeof(Formula))
+                {
+                    SetCellContents(name, (Formula)original);
+                }
+                else
+                {
+                    SetCellContents(name, "");
+                }
+                throw new CircularException();
+            }
+
         }
 
+        
         protected override IEnumerable<string> GetDirectDependents(string name)
         {
 
@@ -194,15 +174,15 @@ namespace SS
                 throw new InvalidNameException();
             }
             return graph.GetDependents(name);
-            //  throw new NotImplementedException();
         }
 
 
 
         private bool nameValidation(string name)
         {
-            String varPattern = @"[a-zA-Z_](?: [a-zA-Z_]|\d)*";
+            String varPattern = @"^[a-zA-Z_](?: [a-zA-Z_]|\d)*$";
             Regex regVar = new Regex(varPattern, RegexOptions.IgnorePatternWhitespace);
+           
             if (!regVar.IsMatch(name) || name is null)
             {
                 return false;
@@ -215,17 +195,25 @@ namespace SS
     class Cell
     {
 
-
-        public Object content;
+        public object content;
         // public double value;
 
         public Cell()
         {
             content = null;
         }
-        public Cell(Object _content)
+        public Cell(Formula _content)
         {
-
+            content = _content;
+            //   value = _value;
+        }
+        public Cell(string _content)
+        {
+            content = _content;
+            //   value = _value;
+        }
+        public Cell(double _content)
+        {
             content = _content;
             //   value = _value;
         }
