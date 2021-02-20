@@ -16,8 +16,20 @@ namespace SS
     public class Spreadsheet : AbstractSpreadsheet
     {
 
-        private Dictionary<string, Cell> spreadsheet = new Dictionary<string, Cell>();
-        private DependencyGraph graph = new DependencyGraph();
+        
+
+        private Dictionary<string, Cell> spreadsheet;
+        private DependencyGraph graph;
+
+        /// <summary>
+        /// A zero-argument constructor that creates an empty spreadsheet.
+        /// 
+        /// </summary>
+        public Spreadsheet()
+        {
+            spreadsheet = new Dictionary<string, Cell>();
+            graph = new DependencyGraph();
+        }
 
         /// <summary>
         /// A method that sets the conent of the named Cell to a double.
