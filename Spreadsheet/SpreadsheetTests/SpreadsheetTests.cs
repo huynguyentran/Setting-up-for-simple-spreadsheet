@@ -435,12 +435,14 @@ namespace SS
         }
 
         [TestMethod]
+        [ExpectedException(typeof(InvalidNameException))]
         public void GetContentNull()
         {
             AbstractSpreadsheet sheet = new Spreadsheet();
             sheet.GetCellContents(null);
 
         }
+
 
     }
 }

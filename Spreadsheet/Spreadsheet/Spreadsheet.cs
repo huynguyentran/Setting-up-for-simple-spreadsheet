@@ -257,7 +257,7 @@ namespace SS
         {
             String varPattern = @"^[a-zA-Z_](?: [a-zA-Z_]|\d)*$";
             Regex regVar = new Regex(varPattern, RegexOptions.IgnorePatternWhitespace);
-            if (string.IsNullOrEmpty(name) || !regVar.IsMatch(name))
+            if (name is null || !regVar.IsMatch(name))
             {
                 return false;
             }
