@@ -8,6 +8,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SpreadsheetUtilities;
 using System.Collections.Generic;
 using System;
+using System.Linq;
 
 namespace SS
 {
@@ -431,8 +432,15 @@ namespace SS
             expected2.Add("c1");
             expected2.Add("b1");
             CollectionAssert.AreEquivalent(expected2, new List<string>(sheet.SetCellContents("c1", 1)));
+        }
 
+        [TestMethod]
+        public void GetContentNull()
+        {
+            AbstractSpreadsheet sheet = new Spreadsheet();
+            sheet.GetCellContents(null);
 
         }
+
     }
 }

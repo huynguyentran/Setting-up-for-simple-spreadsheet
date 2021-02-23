@@ -238,6 +238,10 @@ namespace SS
         /// <returns>A list of dependents.</returns>
         protected override IEnumerable<string> GetDirectDependents(string name)
         {
+            if (!nameValidation(name))
+            {
+                throw new InvalidNameException();
+            }
             return graph.GetDependents(name);
         }
 
@@ -253,7 +257,7 @@ namespace SS
         {
             String varPattern = @"^[a-zA-Z_](?: [a-zA-Z_]|\d)*$";
             Regex regVar = new Regex(varPattern, RegexOptions.IgnorePatternWhitespace);
-            if (!regVar.IsMatch(name) || name is null)
+            if (string.IsNullOrEmpty(name) || !regVar.IsMatch(name))
             {
                 return false;
             }
