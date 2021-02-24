@@ -16,7 +16,7 @@ namespace SS
     public class Spreadsheet : AbstractSpreadsheet
     {
 
-        
+        // Regex regex = new Regex(@"\b[a-zA-Z]+\d+\b");
 
         private Dictionary<string, Cell> spreadsheet;
         private DependencyGraph graph;
@@ -25,11 +25,19 @@ namespace SS
         /// A zero-argument constructor that creates an empty spreadsheet.
         /// 
         /// </summary>
-        public Spreadsheet()
+        public Spreadsheet() : base(s => true, s => s,  "default")
         {
             spreadsheet = new Dictionary<string, Cell>();
             graph = new DependencyGraph();
         }
+
+        public Spreadsheet(Func<string, bool> isValid, Func<string,string> normalize, string version) : base(isValid , normalize, version)
+        {
+            spreadsheet = new Dictionary<string, Cell>();
+            graph = new DependencyGraph();
+        }
+
+        public override bool Changed { get => throw new NotImplementedException(); protected set => throw new NotImplementedException(); }
 
         /// <summary>
         /// A method that sets the conent of the named Cell to a double.
@@ -59,6 +67,11 @@ namespace SS
 
         }
 
+        public override object GetCellValue(string name)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// A method that returns the list of name of non-empty cells in the spreadsheet.
         /// 
@@ -68,6 +81,16 @@ namespace SS
         {
             return new List<string>(spreadsheet.Keys);
 
+        }
+
+        public override string GetSavedVersion(string filename)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Save(string filename)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -230,6 +253,11 @@ namespace SS
 
         }
 
+        public override IList<string> SetContentsOfCell(string name, string content)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// A protected method to get direct dependents.
         /// 
@@ -275,6 +303,7 @@ namespace SS
     {
 
         private object content;
+        private object value;
 
         /// <summary>
         /// A constructor to initializing the cell.
