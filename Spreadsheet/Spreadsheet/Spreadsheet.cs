@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Xml;
 
 namespace SS
 {
@@ -25,19 +26,28 @@ namespace SS
         /// A zero-argument constructor that creates an empty spreadsheet.
         /// 
         /// </summary>
-        public Spreadsheet() : base(s => true, s => s,  "default")
+        public Spreadsheet() : base(s => true, s => s, "default")
         {
             spreadsheet = new Dictionary<string, Cell>();
             graph = new DependencyGraph();
         }
 
-        public Spreadsheet(Func<string, bool> isValid, Func<string,string> normalize, string version) : base(isValid , normalize, version)
+        public Spreadsheet(Func<string, bool> isValid, Func<string, string> normalize, string version) : base(isValid, normalize, version)
         {
             spreadsheet = new Dictionary<string, Cell>();
             graph = new DependencyGraph();
         }
 
-        public override bool Changed { get => throw new NotImplementedException(); protected set => throw new NotImplementedException(); }
+
+        public Spreadsheet(string filename, Func<string, bool> isValid, Func<string, string> normalize, string version) : base(isValid, normalize, version)
+        {
+            spreadsheet = new Dictionary<string, Cell>();
+            graph = new DependencyGraph();
+        }
+
+        public override bool Changed 
+        { get => throw new NotImplementedException(); protected set => throw new NotImplementedException(); 
+        }
 
         /// <summary>
         /// A method that sets the conent of the named Cell to a double.
@@ -52,24 +62,35 @@ namespace SS
         /// <returns>A list of name that depended directly and indirectly on the named Cell.</returns>
         public override object GetCellContents(string name)
         {
-            if (!nameValidation(name))
+            if (!variableValidator(name))
             {
                 throw new InvalidNameException();
             }
-
-            if (!spreadsheet.ContainsKey(name))
+            string newName = Normalize(name);
+            if (!spreadsheet.ContainsKey(newName))
             {
                 return "";
             }
 
-            return spreadsheet[name].getContent();
+            return spreadsheet[newName].getContent();
 
 
         }
 
         public override object GetCellValue(string name)
         {
-            throw new NotImplementedException();
+            if (!variableValidator(name))
+            {
+                throw new InvalidNameException();
+            }
+            string newName = Normalize(name);
+            if (!spreadsheet.ContainsKey(newName))
+            {
+                return "";
+            }
+
+            return returnValue(newName);
+
         }
 
         /// <summary>
@@ -80,17 +101,49 @@ namespace SS
         public override IEnumerable<string> GetNamesOfAllNonemptyCells()
         {
             return new List<string>(spreadsheet.Keys);
-
         }
 
         public override string GetSavedVersion(string filename)
         {
+           //
             throw new NotImplementedException();
         }
 
         public override void Save(string filename)
         {
-            throw new NotImplementedException();
+            //Github example XM
+            XmlWriterSettings settings = new XmlWriterSettings();
+            settings.Indent = true;
+            settings.IndentChars = "  ";
+            using (XmlWriter writer = XmlWriter.Create(filename, settings)) 
+            {
+                writer.WriteStartDocument();
+                writer.WriteStartElement("spreadsheet");
+                // This adds an attribute to the Nation element
+                writer.WriteAttributeString("version", this.Version);
+                foreach (KeyValuePair<string, Cell> entry in spreadsheet)
+                {
+                    writer.WriteStartElement("cell");
+                    writer.WriteStartElement("name", entry.Key);
+                    if (entry.Value.getContent() is string)
+                    {
+                        writer.WriteStartElement("content", (string)entry.Value.getContent());
+                    }
+                    else if (entry.Value.getContent() is double)
+                    {
+                        writer.WriteStartElement("content", entry.Value.getContent().ToString());
+                    }
+                    else
+                    {
+                        writer.WriteStartElement("content", "=" + entry.Value.getContent().ToString());
+                    }
+                    writer.WriteEndElement();
+                    writer.WriteEndElement();
+                    writer.WriteEndElement();
+                }
+                writer.WriteEndElement();
+                writer.WriteEndDocument();
+            }
         }
 
         /// <summary>
@@ -104,12 +157,12 @@ namespace SS
         /// <param name="number">The dobule content</param>
         /// <throw> InvalidNameException() if the name is not valid.</throw>
         /// <returns>A list of name that depended directly and indirectly on the named Cell.</returns>
-        public override IList<string> SetCellContents(string name, double number)
+        protected override IList<string> SetCellContents(string name, double number)
         {
-            if (!nameValidation(name))
-            {
-                throw new InvalidNameException();
-            }
+            //if (!nameValidation(name))
+            //{
+            //    throw new InvalidNameException();
+            //}
 
 
             if (spreadsheet.ContainsKey(name))
@@ -141,18 +194,18 @@ namespace SS
         /// <throw> InvalidNameException() if the name is not valid.</throw>
         /// <throw> ArgumentNullException() if the text is null.</throw>
         /// <returns>A list of name that depended directly and indirectly on the named Cell.</returns>
-        public override IList<string> SetCellContents(string name, string text)
+        protected override IList<string> SetCellContents(string name, string text)
         {
 
-            if (text is null)
-            {
-                throw new ArgumentNullException();
-            }
+            //if (text is null)
+            //{
+            //    throw new ArgumentNullException();
+            //}
 
-            if (!nameValidation(name))
-            {
-                throw new InvalidNameException();
-            }
+            //if (!nameValidation(name))
+            //{
+            //    throw new InvalidNameException();
+            //}
 
             if (spreadsheet.ContainsKey(name))
             {
@@ -190,18 +243,18 @@ namespace SS
         /// <throw> ArgumentNullException() if the text is null.</throw>
         /// <throw> CircularException() if the Formula creates Circular.</throw>
         /// <returns>A list of name that depended directly and indirectly on the named Cell.</returns>
-        public override IList<string> SetCellContents(string name, Formula formula)
+        protected override IList<string> SetCellContents(string name, Formula formula)
         {
 
-            if (formula is null)
-            {
-                throw new ArgumentNullException();
-            }
+            //if (formula is null)
+            //{
+            //    throw new ArgumentNullException();
+            //}
 
-            if (!nameValidation(name))
-            {
-                throw new InvalidNameException();
-            }
+            //if (!variableValidator(name))
+            //{
+            //    throw new InvalidNameException();
+            //}
 
             object original = GetCellContents(name);
 
@@ -253,10 +306,39 @@ namespace SS
 
         }
 
+
         public override IList<string> SetContentsOfCell(string name, string content)
         {
-            throw new NotImplementedException();
+            if (content is null)
+            {
+                throw new ArgumentNullException();
+            }
+
+            if (!variableValidator(name))
+            {
+                throw new InvalidNameException();
+            }
+
+           String newName =  Normalize(name);
+
+            if (double.TryParse(content, out double num))
+            {
+                return SetCellContents(newName, num);
+            }
+
+            else if (content.Substring(0,1).Equals("="))
+            {
+                String formula = content.Substring(1);
+                Formula f = new Formula(formula);
+                return SetCellContents(newName, f);
+            }
+
+
+            return SetCellContents(newName, content);
+
         }
+
+
 
         /// <summary>
         /// A protected method to get direct dependents.
@@ -266,11 +348,12 @@ namespace SS
         /// <returns>A list of dependents.</returns>
         protected override IEnumerable<string> GetDirectDependents(string name)
         {
-            if (!nameValidation(name))
+            if (!variableValidator(name))
             {
                 throw new InvalidNameException();
             }
-            return graph.GetDependents(name);
+            string newName = Normalize(name);
+            return graph.GetDependents(newName);
         }
 
 
@@ -281,17 +364,67 @@ namespace SS
         /// </summary>
         /// <param name="name">The cell name</param>
         /// <returns>true/false.</returns>
-        private bool nameValidation(string name)
+        //private bool nameValidation(string name)
+        //{
+        //    String varPattern = @"^[a-zA-Z_](?: [a-zA-Z_]|\d)*$";
+        //    Regex regVar = new Regex(varPattern, RegexOptions.IgnorePatternWhitespace);
+        //    if (name is null || !regVar.IsMatch(name))
+        //    {
+        //        return false;
+        //    }
+        //    return true;
+        //}
+
+        private bool variableValidator(string variable)
         {
-            String varPattern = @"^[a-zA-Z_](?: [a-zA-Z_]|\d)*$";
-            Regex regVar = new Regex(varPattern, RegexOptions.IgnorePatternWhitespace);
-            if (name is null || !regVar.IsMatch(name))
+            // ^[a-zA-Z]+\d+$
+            Regex regex = new Regex(@"^[a-zA-Z]+\d+$");
+            if (variable is null || !regex.IsMatch(variable) || !IsValid(variable) || !IsValid(Normalize(variable)))
             {
                 return false;
             }
             return true;
         }
+
+        private double lookup(string name)
+        {
+            if (spreadsheet[name].getContent() is double)
+            {
+                return (double)spreadsheet[name].getContent();
+            }
+
+            else if (spreadsheet[name].getContent() is Formula)
+            {
+                Formula f = (Formula)spreadsheet[name].getContent();
+                var value = f.Evaluate(lookup);
+                if (value is double)
+                {
+                    return (double)value;
+                }
+                else
+                {
+                    throw new ArgumentException("invalid.");
+                }
+            }
+
+            else throw new ArgumentException("invalid.");
+
+        }
+
+        private object returnValue(string name)
+        {
+            if (spreadsheet[name].getContent() is string || spreadsheet[name].getContent() is double)
+            {
+                return spreadsheet[name].getContent();
+            }
+            Formula f = (Formula)spreadsheet[name].getContent();
+            return f.Evaluate(lookup);
+        }
+
+
     }
+
+
 
 
 
@@ -303,7 +436,7 @@ namespace SS
     {
 
         private object content;
-        private object value;
+
 
         /// <summary>
         /// A constructor to initializing the cell.
