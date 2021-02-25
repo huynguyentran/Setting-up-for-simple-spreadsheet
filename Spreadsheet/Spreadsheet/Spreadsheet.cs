@@ -43,10 +43,52 @@ namespace SS
         {
             spreadsheet = new Dictionary<string, Cell>();
             graph = new DependencyGraph();
+            try
+            {
+                using (XmlReader reader = XmlReader.Create(filename))
+                {
+                    while (reader.Read())
+                    {
+                        if (reader.IsStartElement())
+                        {
+                            switch (reader.Name)
+                            {
+                                case "spreadsheet":
+                                    Console.WriteLine("spreadsheet found: " + reader["version"]);
+                                    break;
+                                case "cell":
+                                    Console.Write("Found cell:");
+                                    break;
+                                case "name":
+                                    Console.Write("\tName = ");
+                                    reader.Read();
+                                    Console.WriteLine(reader.Value);
+                                    break;
+                                case "content":
+                                    Console.Write("\tName = ");
+                                    reader.Read();
+                                    Console.WriteLine(reader.Value);
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            if (reader.Name == "cell")
+                                Console.WriteLine("end of cells");
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                throw new SpreadsheetReadWriteException(e.Message);
+            }
+
         }
 
-        public override bool Changed 
-        { get => throw new NotImplementedException(); protected set => throw new NotImplementedException(); 
+        public override bool Changed
+        {
+            get; protected set;
         }
 
         /// <summary>
@@ -71,10 +113,7 @@ namespace SS
             {
                 return "";
             }
-
             return spreadsheet[newName].getContent();
-
-
         }
 
         public override object GetCellValue(string name)
@@ -88,9 +127,7 @@ namespace SS
             {
                 return "";
             }
-
             return returnValue(newName);
-
         }
 
         /// <summary>
@@ -105,7 +142,7 @@ namespace SS
 
         public override string GetSavedVersion(string filename)
         {
-           //
+            //Takes in filename, read it, find the spreadsheetelement and get attribute
             throw new NotImplementedException();
         }
 
@@ -115,34 +152,46 @@ namespace SS
             XmlWriterSettings settings = new XmlWriterSettings();
             settings.Indent = true;
             settings.IndentChars = "  ";
-            using (XmlWriter writer = XmlWriter.Create(filename, settings)) 
+            try
             {
-                writer.WriteStartDocument();
-                writer.WriteStartElement("spreadsheet");
-                // This adds an attribute to the Nation element
-                writer.WriteAttributeString("version", this.Version);
-                foreach (KeyValuePair<string, Cell> entry in spreadsheet)
+                using (XmlWriter writer = XmlWriter.Create(filename, settings))
                 {
-                    writer.WriteStartElement("cell");
-                    writer.WriteStartElement("name", entry.Key);
-                    if (entry.Value.getContent() is string)
+
+                    writer.WriteStartDocument();
+                    writer.WriteStartElement("spreadsheet");
+                    // This adds an attribute to the Nation element
+                    writer.WriteAttributeString("version", this.Version);
+                    foreach (KeyValuePair<string, Cell> entry in spreadsheet)
                     {
-                        writer.WriteStartElement("content", (string)entry.Value.getContent());
-                    }
-                    else if (entry.Value.getContent() is double)
-                    {
-                        writer.WriteStartElement("content", entry.Value.getContent().ToString());
-                    }
-                    else
-                    {
-                        writer.WriteStartElement("content", "=" + entry.Value.getContent().ToString());
+                        writer.WriteStartElement("cell");
+                        writer.WriteStartElement("name", entry.Key);
+                        if (entry.Value.getContent() is string)
+                        {
+                            writer.WriteStartElement("content", (string)entry.Value.getContent());
+                        }
+                        else if (entry.Value.getContent() is double)
+                        {
+                            writer.WriteStartElement("content", entry.Value.getContent().ToString());
+                        }
+                        else
+                        {
+                            writer.WriteStartElement("content", "=" + entry.Value.getContent().ToString());
+                        }
+                        writer.WriteEndElement();
+                        writer.WriteEndElement();
+                        writer.WriteEndElement();
                     }
                     writer.WriteEndElement();
-                    writer.WriteEndElement();
-                    writer.WriteEndElement();
+                    writer.WriteEndDocument();
+
+                    this.Changed = false;
+
                 }
-                writer.WriteEndElement();
-                writer.WriteEndDocument();
+            }
+
+            catch (Exception e)
+            {
+                throw new SpreadsheetReadWriteException(e.Message);
             }
         }
 
@@ -178,7 +227,7 @@ namespace SS
             {
                 spreadsheet.Add(name, new Cell(number));
             }
-
+            this.Changed = true;
             return new List<string>(GetCellsToRecalculate(name));
         }
 
@@ -227,7 +276,7 @@ namespace SS
             {
                 spreadsheet.Remove(name);
             }
-
+            this.Changed = true;
             return new List<string>(GetCellsToRecalculate(name));
         }
 
@@ -282,6 +331,7 @@ namespace SS
             }
             try
             {
+                this.Changed = true;
                 IEnumerable<string> list = GetCellsToRecalculate(name);
                 return new List<string>(list);
             }
@@ -300,7 +350,7 @@ namespace SS
                 {
                     SetCellContents(name, (Formula)original);
                 }
-
+                this.Changed = false;
                 throw new CircularException();
             }
 
@@ -319,14 +369,14 @@ namespace SS
                 throw new InvalidNameException();
             }
 
-           String newName =  Normalize(name);
+            String newName = Normalize(name);
 
             if (double.TryParse(content, out double num))
             {
                 return SetCellContents(newName, num);
             }
 
-            else if (content.Substring(0,1).Equals("="))
+            else if (content.Substring(0, 1).Equals("="))
             {
                 String formula = content.Substring(1);
                 Formula f = new Formula(formula);
