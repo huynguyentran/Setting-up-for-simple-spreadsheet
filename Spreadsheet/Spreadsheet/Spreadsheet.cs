@@ -51,31 +51,28 @@ namespace SS
                     {
                         if (reader.IsStartElement())
                         {
+                            String name = "";
+                            String content = "";
                             switch (reader.Name)
                             {
+
                                 case "spreadsheet":
-                                    Console.WriteLine("spreadsheet found: " + reader["version"]);
+                                    this.Version = reader["version"];
                                     break;
                                 case "cell":
-                                    Console.Write("Found cell:");
                                     break;
                                 case "name":
-                                    Console.Write("\tName = ");
                                     reader.Read();
-                                    Console.WriteLine(reader.Value);
+                                    name = reader.Value;
                                     break;
                                 case "content":
-                                    Console.Write("\tName = ");
                                     reader.Read();
-                                    Console.WriteLine(reader.Value);
+                                    content = reader.Value;
+                                    SetContentsOfCell(name, content);
                                     break;
                             }
                         }
-                        else
-                        {
-                            if (reader.Name == "cell")
-                                Console.WriteLine("end of cells");
-                        }
+
                     }
                 }
             }
@@ -142,8 +139,26 @@ namespace SS
 
         public override string GetSavedVersion(string filename)
         {
+            try
+            {
+                using (XmlReader reader = XmlReader.Create(filename))
+                {
+                    if (reader.Read())
+                    {
+                        if (reader.Name.Equals("spreadsheet"))
+                        {
+                            return reader["version"];
+                        }
+                    }
+
+                    throw new SpreadsheetReadWriteException("Can not find version information");
+                }
+            }
+            catch (Exception e)
+            {
+                throw new SpreadsheetReadWriteException(e.Message);
+            }
             //Takes in filename, read it, find the spreadsheetelement and get attribute
-            throw new NotImplementedException();
         }
 
         public override void Save(string filename)
@@ -331,8 +346,9 @@ namespace SS
             }
             try
             {
-                this.Changed = true;
+
                 IEnumerable<string> list = GetCellsToRecalculate(name);
+                this.Changed = true;
                 return new List<string>(list);
             }
             catch
@@ -350,7 +366,6 @@ namespace SS
                 {
                     SetCellContents(name, (Formula)original);
                 }
-                this.Changed = false;
                 throw new CircularException();
             }
 
@@ -376,7 +391,7 @@ namespace SS
                 return SetCellContents(newName, num);
             }
 
-            else if (content.Substring(0, 1).Equals("="))
+            else if (content.Length > 0 && content.Substring(0, 1).Equals("="))
             {
                 String formula = content.Substring(1);
                 Formula f = new Formula(formula);
