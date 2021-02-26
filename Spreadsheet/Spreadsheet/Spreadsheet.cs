@@ -45,7 +45,7 @@ namespace SS
         {
             spreadsheet = new Dictionary<string, Cell>();
             graph = new DependencyGraph();
-          //  this.Changed = false;
+            //  this.Changed = false;
             try
             {
                 using (XmlReader reader = XmlReader.Create(filePath))
@@ -55,7 +55,7 @@ namespace SS
                     while (reader.Read())
                     {
                         if (reader.IsStartElement())
-                        {            
+                        {
                             switch (reader.Name)
                             {
                                 case "spreadsheet":
@@ -147,7 +147,7 @@ namespace SS
                 using (XmlReader reader = XmlReader.Create(filename))
                 {
                     while (reader.Read())
-                    {           
+                    {
                         if (reader.Name.Equals("spreadsheet"))
                         {
                             return reader["version"];
@@ -176,7 +176,6 @@ namespace SS
 
                     writer.WriteStartDocument();
                     writer.WriteStartElement("spreadsheet");
-                    // This adds an attribute to the Nation element
                     writer.WriteAttributeString("version", this.Version);
                     foreach (KeyValuePair<string, Cell> entry in spreadsheet)
                     {
@@ -344,7 +343,21 @@ namespace SS
 
         }
 
-
+        /// <summary>
+        /// A method that sets the conent of the named Cell to a Formula, a string 
+        /// or a double. The content is depended by the structure of the parameter
+        /// string content.
+        /// The method returns a list consisting of name plus the names of 
+        /// all other cells whose value depends, directly or indirectly, on 
+        /// the named cell. The method also updates the values of all dependents 
+        /// of the name cell.
+        /// 
+        /// </summary>
+        /// <param name="name">The string cell name</param>
+        /// <param name="Formula">The Formula content</param>
+        /// <throw> ArgumentNullException() if the text is null.</throw>
+        /// <throw> CircularException() if the Formula creates Circular.</throw>
+        /// <returns>A list of name that depended directly and indirectly on the named Cell.</retu
         public override IList<string> SetContentsOfCell(string name, string content)
         {
             if (content is null)
@@ -370,8 +383,6 @@ namespace SS
                 String formula = content.Substring(1);
                 Formula f = new Formula(formula);
                 list = new List<string>(SetCellContents(newName, f));
-              //  spreadsheet[newName].setValue(f.Evaluate(lookup));
-                // return SetCellContents(newName, f);
             }
 
             else
@@ -408,10 +419,6 @@ namespace SS
         /// <returns>A list of dependents.</returns>
         protected override IEnumerable<string> GetDirectDependents(string name)
         {
-            //if (!variableValidator(name))
-            //{
-            //    throw new InvalidNameException();
-            //}
             string newName = Normalize(name);
             return graph.GetDependents(newName);
         }
@@ -426,7 +433,6 @@ namespace SS
         /// <returns>true/false.</returns>
         private bool variableValidator(string variable)
         {
-            // ^[a-zA-Z]+\d+$
             Regex regex = new Regex(@"^[a-zA-Z]+\d+$");
             if (variable is null || !regex.IsMatch(variable) || !IsValid(variable) || !IsValid(Normalize(variable)))
             {
@@ -439,9 +445,16 @@ namespace SS
             return true;
         }
 
+        /// <summary>
+        /// A private method to look up the value of the cell.
+        /// 
+        /// </summary>
+        /// <param name="name">The cell name</param>
+        /// <returns>The value of cell if it is double.</returns>
+        /// <throw> ArgumentException if the cell doesn't contain a double.</throw>
         private double lookup(string name)
         {
-            if (spreadsheet.ContainsKey(name) && spreadsheet[name].getValue() is double )
+            if (spreadsheet.ContainsKey(name) && spreadsheet[name].getValue() is double)
             {
                 return (double)spreadsheet[name].getValue();
             }
@@ -458,7 +471,7 @@ namespace SS
 
 
     /// <summary>
-    /// A class represented a Cell that holds a content object. 
+    /// A class represented a Cell that holds a content object and a value 
     /// 
     /// </summary>
     class Cell
@@ -469,7 +482,7 @@ namespace SS
 
 
         /// <summary>
-        /// A constructor to initializing the cell.
+        /// A constructor to initializing the cell with content(Formula)
         /// 
         /// </summary>
         /// <param name="_content">The object content(Formula)</param>
@@ -479,7 +492,7 @@ namespace SS
         }
 
         /// <summary>
-        /// A constructor to initializing the cell.
+        /// A constructor to initializing the cell with content(string)
         /// 
         /// </summary>
         /// <param name="_content">The object content(string)</param>
@@ -489,7 +502,7 @@ namespace SS
         }
 
         /// <summary>
-        /// A constructor to initializing the cell.
+        /// A constructor to initializing the cell with content(double)
         /// 
         /// </summary>
         /// <param name="_content">The object content(double)</param>
@@ -499,7 +512,7 @@ namespace SS
         }
 
         /// <summary>
-        /// A constructor to initializing the cell.
+        /// A method that would return the content of the cell.
         /// 
         /// </summary>
         /// <returns>The content of the cell.</returns>
@@ -512,17 +525,27 @@ namespace SS
         /// A method to change the content of a cell. 
         /// 
         /// </summary>
-        /// <param name="_content">The object content(object)</param>
+        /// <param name="obj">The object content(object)</param>
         public void setContent(object obj)
         {
             content = obj;
         }
 
+        /// <summary>
+        /// A method to change the vale of the cell.
+        /// 
+        /// </summary>
+        /// <param name="obj">The object content(object)</param>
         public void setValue(object obj)
         {
             value = obj;
         }
 
+        /// <summary>
+        /// A method that would return the value of the cell.
+        /// 
+        /// </summary>
+        /// <returns>The content of the cell.</returns>
         public object getValue()
         {
             return value;

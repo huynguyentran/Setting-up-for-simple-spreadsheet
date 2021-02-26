@@ -605,8 +605,8 @@ namespace SS
         [ExpectedException(typeof(SpreadsheetReadWriteException))]
         public void ThrowIlegalName()
         {
-            AbstractSpreadsheet ss = new Spreadsheet(null, s=> true, s=>s, "1.23");
-         
+            AbstractSpreadsheet ss = new Spreadsheet(null, s => true, s => s, "1.23");
+
         }
         [TestMethod]
         public void NoFilePathConstructor()
@@ -631,7 +631,7 @@ namespace SS
         [ExpectedException(typeof(InvalidNameException))]
         public void NormalizeThrow2()
         {
-            AbstractSpreadsheet sheet = new Spreadsheet(s => true, s =>"@a23", "1.23");
+            AbstractSpreadsheet sheet = new Spreadsheet(s => true, s => "@a23", "1.23");
             sheet.SetContentsOfCell("a2", "30");
 
         }
@@ -654,6 +654,11 @@ namespace SS
             Assert.AreEqual(4.0, sheet.GetCellValue("a4"));
             sheet.SetContentsOfCell("a5", "=a4+1");
             Assert.AreEqual(5.0, sheet.GetCellValue("a5"));
+            expected.Add("a3");
+            expected.Add("a4");
+            expected.Add("a5");
+            list = new List<string>(sheet.SetContentsOfCell("a1", "1"));
+            CollectionAssert.AreEqual(expected, list);
             sheet.SetContentsOfCell("a1", "2");
             Assert.AreEqual(6.0, sheet.GetCellValue("a5"));
 

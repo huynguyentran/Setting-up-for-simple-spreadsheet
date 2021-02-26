@@ -61,8 +61,7 @@ namespace Spreadsheet_Solution_Tester
             Console.WriteLine((Evaluator.Evaluate("1+2*5", SimpleLookup)) == 11);
             Console.WriteLine("Test 11:");
             Console.WriteLine((Evaluator.Evaluate("(((1+2)*5)+3)/2", SimpleLookup)) == 9);
-     
-
+   
 
             Console.WriteLine("");
             Console.WriteLine("If the test is correct, the statement will print Passed.");
