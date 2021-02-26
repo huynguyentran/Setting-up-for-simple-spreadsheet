@@ -30,32 +30,34 @@ namespace SS
         {
             spreadsheet = new Dictionary<string, Cell>();
             graph = new DependencyGraph();
+            this.Changed = false;
         }
 
         public Spreadsheet(Func<string, bool> isValid, Func<string, string> normalize, string version) : base(isValid, normalize, version)
         {
             spreadsheet = new Dictionary<string, Cell>();
             graph = new DependencyGraph();
+            this.Changed = false;
         }
 
 
-        public Spreadsheet(string filename, Func<string, bool> isValid, Func<string, string> normalize, string version) : base(isValid, normalize, version)
+        public Spreadsheet(string filePath, Func<string, bool> isValid, Func<string, string> normalize, string version) : base(isValid, normalize, version)
         {
             spreadsheet = new Dictionary<string, Cell>();
             graph = new DependencyGraph();
+          //  this.Changed = false;
             try
             {
-                using (XmlReader reader = XmlReader.Create(filename))
+                using (XmlReader reader = XmlReader.Create(filePath))
                 {
+                    String name = "";
+                    String content = "";
                     while (reader.Read())
                     {
                         if (reader.IsStartElement())
-                        {
-                            String name = "";
-                            String content = "";
+                        {            
                             switch (reader.Name)
                             {
-
                                 case "spreadsheet":
                                     this.Version = reader["version"];
                                     break;
@@ -75,6 +77,7 @@ namespace SS
 
                     }
                 }
+                this.Changed = false;
             }
             catch (Exception e)
             {
@@ -124,7 +127,7 @@ namespace SS
             {
                 return "";
             }
-            return returnValue(newName);
+            return spreadsheet[newName].getValue();
         }
 
         /// <summary>
@@ -143,14 +146,13 @@ namespace SS
             {
                 using (XmlReader reader = XmlReader.Create(filename))
                 {
-                    if (reader.Read())
-                    {
+                    while (reader.Read())
+                    {           
                         if (reader.Name.Equals("spreadsheet"))
                         {
                             return reader["version"];
                         }
                     }
-
                     throw new SpreadsheetReadWriteException("Can not find version information");
                 }
             }
@@ -179,21 +181,20 @@ namespace SS
                     foreach (KeyValuePair<string, Cell> entry in spreadsheet)
                     {
                         writer.WriteStartElement("cell");
-                        writer.WriteStartElement("name", entry.Key);
+                        writer.WriteElementString("name", entry.Key);
+
                         if (entry.Value.getContent() is string)
                         {
-                            writer.WriteStartElement("content", (string)entry.Value.getContent());
+                            writer.WriteElementString("content", (string)entry.Value.getContent());
                         }
                         else if (entry.Value.getContent() is double)
                         {
-                            writer.WriteStartElement("content", entry.Value.getContent().ToString());
+                            writer.WriteElementString("content", entry.Value.getContent().ToString());
                         }
                         else
                         {
-                            writer.WriteStartElement("content", "=" + entry.Value.getContent().ToString());
+                            writer.WriteElementString("content", "=" + entry.Value.getContent().ToString());
                         }
-                        writer.WriteEndElement();
-                        writer.WriteEndElement();
                         writer.WriteEndElement();
                     }
                     writer.WriteEndElement();
@@ -223,12 +224,6 @@ namespace SS
         /// <returns>A list of name that depended directly and indirectly on the named Cell.</returns>
         protected override IList<string> SetCellContents(string name, double number)
         {
-            //if (!nameValidation(name))
-            //{
-            //    throw new InvalidNameException();
-            //}
-
-
             if (spreadsheet.ContainsKey(name))
             {
                 if (spreadsheet[name].getContent().GetType() == typeof(Formula) && graph.HasDependees(name))
@@ -260,17 +255,6 @@ namespace SS
         /// <returns>A list of name that depended directly and indirectly on the named Cell.</returns>
         protected override IList<string> SetCellContents(string name, string text)
         {
-
-            //if (text is null)
-            //{
-            //    throw new ArgumentNullException();
-            //}
-
-            //if (!nameValidation(name))
-            //{
-            //    throw new InvalidNameException();
-            //}
-
             if (spreadsheet.ContainsKey(name))
             {
                 if (spreadsheet[name].getContent().GetType() == typeof(Formula) && graph.HasDependees(name))
@@ -309,17 +293,6 @@ namespace SS
         /// <returns>A list of name that depended directly and indirectly on the named Cell.</returns>
         protected override IList<string> SetCellContents(string name, Formula formula)
         {
-
-            //if (formula is null)
-            //{
-            //    throw new ArgumentNullException();
-            //}
-
-            //if (!variableValidator(name))
-            //{
-            //    throw new InvalidNameException();
-            //}
-
             object original = GetCellContents(name);
 
             if (spreadsheet.ContainsKey(name))
@@ -385,21 +358,43 @@ namespace SS
             }
 
             String newName = Normalize(name);
+            List<string> list = null;
 
             if (double.TryParse(content, out double num))
             {
-                return SetCellContents(newName, num);
+                list = new List<string>(SetCellContents(newName, num));
             }
 
             else if (content.Length > 0 && content.Substring(0, 1).Equals("="))
             {
                 String formula = content.Substring(1);
                 Formula f = new Formula(formula);
-                return SetCellContents(newName, f);
+                list = new List<string>(SetCellContents(newName, f));
+              //  spreadsheet[newName].setValue(f.Evaluate(lookup));
+                // return SetCellContents(newName, f);
             }
 
+            else
+            {
+                list = new List<string>(SetCellContents(newName, content));
+            }
 
-            return SetCellContents(newName, content);
+            foreach (string str in list)
+            {
+                if (!spreadsheet.ContainsKey(str))
+                {
+                    continue;
+                }
+                else if (spreadsheet[str].getContent() is Formula f)
+                {
+                    spreadsheet[str].setValue(f.Evaluate(lookup));
+                }
+                else
+                {
+                    spreadsheet[str].setValue(spreadsheet[str].getContent());
+                }
+            }
+            return list;
 
         }
 
@@ -413,10 +408,10 @@ namespace SS
         /// <returns>A list of dependents.</returns>
         protected override IEnumerable<string> GetDirectDependents(string name)
         {
-            if (!variableValidator(name))
-            {
-                throw new InvalidNameException();
-            }
+            //if (!variableValidator(name))
+            //{
+            //    throw new InvalidNameException();
+            //}
             string newName = Normalize(name);
             return graph.GetDependents(newName);
         }
@@ -429,17 +424,6 @@ namespace SS
         /// </summary>
         /// <param name="name">The cell name</param>
         /// <returns>true/false.</returns>
-        //private bool nameValidation(string name)
-        //{
-        //    String varPattern = @"^[a-zA-Z_](?: [a-zA-Z_]|\d)*$";
-        //    Regex regVar = new Regex(varPattern, RegexOptions.IgnorePatternWhitespace);
-        //    if (name is null || !regVar.IsMatch(name))
-        //    {
-        //        return false;
-        //    }
-        //    return true;
-        //}
-
         private bool variableValidator(string variable)
         {
             // ^[a-zA-Z]+\d+$
@@ -448,42 +432,22 @@ namespace SS
             {
                 return false;
             }
+            if (Normalize(variable) is null || !regex.IsMatch(Normalize(variable)))
+            {
+                return false;
+            }
             return true;
         }
 
         private double lookup(string name)
         {
-            if (spreadsheet[name].getContent() is double)
+            if (spreadsheet.ContainsKey(name) && spreadsheet[name].getValue() is double )
             {
-                return (double)spreadsheet[name].getContent();
-            }
-
-            else if (spreadsheet[name].getContent() is Formula)
-            {
-                Formula f = (Formula)spreadsheet[name].getContent();
-                var value = f.Evaluate(lookup);
-                if (value is double)
-                {
-                    return (double)value;
-                }
-                else
-                {
-                    throw new ArgumentException("invalid.");
-                }
+                return (double)spreadsheet[name].getValue();
             }
 
             else throw new ArgumentException("invalid.");
 
-        }
-
-        private object returnValue(string name)
-        {
-            if (spreadsheet[name].getContent() is string || spreadsheet[name].getContent() is double)
-            {
-                return spreadsheet[name].getContent();
-            }
-            Formula f = (Formula)spreadsheet[name].getContent();
-            return f.Evaluate(lookup);
         }
 
 
@@ -501,6 +465,7 @@ namespace SS
     {
 
         private object content;
+        private object value;
 
 
         /// <summary>
@@ -553,6 +518,15 @@ namespace SS
             content = obj;
         }
 
+        public void setValue(object obj)
+        {
+            value = obj;
+        }
+
+        public object getValue()
+        {
+            return value;
+        }
     }
 
 }
