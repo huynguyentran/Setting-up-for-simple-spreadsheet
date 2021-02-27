@@ -752,5 +752,59 @@ namespace SS
         }
 
 
+        [TestMethod]
+        [ExpectedException(typeof(SpreadsheetReadWriteException))]
+        public void ConstructorWithoutVersion()
+        {
+            using (XmlWriter writer = XmlWriter.Create("final.txt"))
+            {
+                writer.WriteStartDocument();
+                writer.WriteStartElement("spreadsheet");
+
+                writer.WriteStartElement("cell");
+                writer.WriteElementString("name", "X1");
+                writer.WriteElementString("content", "hello");
+                writer.WriteEndElement();
+
+                writer.WriteStartElement("cell");
+                writer.WriteElementString("name", "X2");
+                writer.WriteElementString("content", "20");
+                writer.WriteEndElement();
+
+                writer.WriteEndElement();
+                writer.WriteEndDocument();
+            }
+            AbstractSpreadsheet ss = new Spreadsheet();
+            Assert.AreEqual("default", ss.GetSavedVersion("wrong.txt"));
+
+        }
+
+
+        [TestMethod]
+        [ExpectedException(typeof(SpreadsheetReadWriteException))]
+        public void ConstructorWithoutVersion2()
+        {
+            using (XmlWriter writer = XmlWriter.Create("final2.txt"))
+            {
+                writer.WriteStartDocument();
+                writer.WriteStartElement("spreadsheet");
+
+                writer.WriteStartElement("cell");
+                writer.WriteElementString("name", "X1");
+                writer.WriteElementString("content", "hello");
+                writer.WriteEndElement();
+
+                writer.WriteStartElement("cell");
+                writer.WriteElementString("name", "X2");
+                writer.WriteElementString("content", "20");
+                writer.WriteEndElement();
+
+                writer.WriteEndElement();
+                writer.WriteEndDocument();
+            }
+            AbstractSpreadsheet ss = new Spreadsheet("final2.txt", s => true, s => s.ToUpper(), null);
+        }
+
+
     }
 }

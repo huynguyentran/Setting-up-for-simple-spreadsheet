@@ -187,7 +187,7 @@ namespace SS
                 {
                     while (reader.Read())
                     {
-                        if (reader.Name.Equals("spreadsheet"))
+                        if (reader.Name.Equals("spreadsheet") && !(reader["version"] is null))
                         {
                             return reader["version"];
                         }
