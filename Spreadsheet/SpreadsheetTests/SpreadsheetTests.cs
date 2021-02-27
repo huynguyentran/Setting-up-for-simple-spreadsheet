@@ -775,7 +775,7 @@ namespace SS
                 writer.WriteEndDocument();
             }
             AbstractSpreadsheet ss = new Spreadsheet();
-            Assert.AreEqual("default", ss.GetSavedVersion("wrong.txt"));
+            Assert.AreEqual("default", ss.GetSavedVersion("final.txt"));
 
         }
 
