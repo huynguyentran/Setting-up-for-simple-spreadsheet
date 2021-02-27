@@ -13,7 +13,7 @@ using System.Xml;
 
 namespace SS
 {
-    //The first 25 tests were PS4 tests that are modified to accomodate the changes in PS5
+    //The first 24 tests were PS4 tests that are modified to accomodate the changes in PS5
     [TestClass]
     public class SpreadsheetTests
     {
@@ -416,8 +416,12 @@ namespace SS
             }
             List<string> actualList = new List<string>(sheet.GetNamesOfAllNonemptyCells());
             CollectionAssert.AreEqual(expectedList, actualList);
+            Assert.AreEqual(new Formula("a1000 +1"), sheet.GetCellContents("a999"));
             CollectionAssert.AreEquivalent(expectedList, new List<string>(sheet.SetContentsOfCell("a999", "1")));
             Assert.AreEqual(1000, actualList.Count);
+            sheet.SetContentsOfCell("a1000", "1");
+            Assert.AreEqual(1000.0, sheet.GetCellValue("a0"));
+         
         }
 
 
@@ -477,7 +481,7 @@ namespace SS
         [TestMethod]
         public void TestInsert()
         {
-            using (XmlWriter writer = XmlWriter.Create("save.txt")) // NOTICE the file with no path
+            using (XmlWriter writer = XmlWriter.Create("save.txt"))
             {
                 writer.WriteStartDocument();
                 writer.WriteStartElement("spreadsheet");
@@ -496,7 +500,7 @@ namespace SS
                 writer.WriteEndElement();
                 writer.WriteEndDocument();
             }
-            AbstractSpreadsheet ss = new Spreadsheet("save.txt", s => true, s => s, "");
+            AbstractSpreadsheet ss = new Spreadsheet("save.txt", s => true, s => s, "1.2");
             Assert.IsFalse(ss.Changed);
             Assert.AreEqual("hello", ss.GetCellValue("A1"));
             Assert.IsFalse(ss.Changed);
@@ -509,7 +513,6 @@ namespace SS
         }
 
         [TestMethod]
-        //   [ExpectedException(typeof(InvalidNameException))]
         public void TestGetValue()
         {
             AbstractSpreadsheet sheet = new Spreadsheet();
@@ -519,9 +522,7 @@ namespace SS
             Assert.AreEqual(15.0, sheet.GetCellValue("a1"));
             Assert.AreEqual("string", sheet.GetCellValue("a2"));
             object obj = new SpreadsheetUtilities.FormulaError();
-            //   Assert.IsInstanceOfType(sheet.GetCellValue("a3"), SpreadsheetUtilities.FormulaError);
             Assert.IsTrue(sheet.GetCellValue("a3") is SpreadsheetUtilities.FormulaError);
-            //  Assert.AreEqual(obj, sheet.GetCellValue("a3"));
             sheet.SetContentsOfCell("a2", "5");
             Assert.AreEqual(20.0, sheet.GetCellValue("a3"));
             Assert.AreEqual("", sheet.GetCellValue("a4"));
@@ -566,7 +567,7 @@ namespace SS
         [ExpectedException(typeof(SpreadsheetReadWriteException))]
         public void ThrowGetSaveVersion2()
         {
-            using (XmlWriter writer = XmlWriter.Create("save.txt")) // NOTICE the file with no path
+            using (XmlWriter writer = XmlWriter.Create("save.txt"))
             {
                 writer.WriteStartDocument();
                 writer.WriteStartElement("spreadSheet");
@@ -661,7 +662,66 @@ namespace SS
             CollectionAssert.AreEqual(expected, list);
             sheet.SetContentsOfCell("a1", "2");
             Assert.AreEqual(6.0, sheet.GetCellValue("a5"));
+        }
 
+
+        [TestMethod]
+        [ExpectedException(typeof(SpreadsheetReadWriteException))]
+        public void SaveNonExistPath()
+        {
+            AbstractSpreadsheet sheet = new Spreadsheet();
+            sheet.SetContentsOfCell("a1", "1");
+            sheet.SetContentsOfCell("a2", "=a1+1");
+            sheet.Save("if/you/are/reading/this/,/I/hope/you/have/a/good/day.xml");
+        }
+        [TestMethod]
+        public void TakingInExistingFile()
+        {
+            using (XmlWriter writer = XmlWriter.Create("test.txt"))
+            {
+                writer.WriteStartDocument();
+                writer.WriteStartElement("spreadsheet");
+                writer.WriteAttributeString("version", "1.2");
+
+                writer.WriteStartElement("cell");
+                writer.WriteElementString("name", "X1");
+                writer.WriteElementString("content", "hello");
+                writer.WriteEndElement();
+
+                writer.WriteStartElement("cell");
+                writer.WriteElementString("name", "X2");
+                writer.WriteElementString("content", "20");
+                writer.WriteEndElement();
+
+                writer.WriteEndElement();
+                writer.WriteEndDocument();
+            }
+
+            AbstractSpreadsheet ss = new Spreadsheet("test.txt", s => true, s => s.ToUpper(), "1.2");
+            Assert.AreEqual("1.2", ss.GetSavedVersion("test.txt"));
+            Assert.IsFalse(ss.Changed);
+            ss.SetContentsOfCell("x3", "4");
+            List<string> expected = new List<string>();
+            expected.Add("X1");
+            expected.Add("X2");
+            expected.Add("X3");
+            CollectionAssert.AreEquivalent(expected, new List<string>(ss.GetNamesOfAllNonemptyCells()));
+            Assert.AreEqual(20.0, ss.GetCellValue("X2"));
+            ss.SetContentsOfCell("x2", "30");
+            Assert.AreEqual(30.0, ss.GetCellValue("X2"));
+            Assert.IsTrue(ss.Changed);
+            ss.Save("test.txt");
+            Assert.IsFalse(ss.Changed);
+        }
+
+        [TestMethod]
+          public void DefaultVersion()
+        {
+            AbstractSpreadsheet ss = new Spreadsheet();
+            ss.SetContentsOfCell("a1", "1");
+            ss.SetContentsOfCell("a2", "2");
+            ss.Save("newSS.txt");
+            Assert.AreEqual("default",ss.GetSavedVersion("newSS.txt"));
         }
 
     }

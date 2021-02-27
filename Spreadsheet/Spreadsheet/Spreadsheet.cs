@@ -1,6 +1,6 @@
 ﻿// Huy Nguyen (u1315096) 
-// 2/19/2021
-// PS4 3500
+// 2/16/2021
+// PS5 3500
 
 // Implementing methods for AbstractSpreadsheet to create afunctional spreadsheet.
 
@@ -16,9 +16,6 @@ namespace SS
 {
     public class Spreadsheet : AbstractSpreadsheet
     {
-
-        // Regex regex = new Regex(@"\b[a-zA-Z]+\d+\b");
-
         private Dictionary<string, Cell> spreadsheet;
         private DependencyGraph graph;
 
@@ -33,6 +30,15 @@ namespace SS
             this.Changed = false;
         }
 
+
+        /// <summary>
+        /// A  constructor that creates an empty spreadsheet that takes in 
+        /// isValid func, normalize func, and a string to indicates version.
+        /// 
+        /// </summary>
+        /// <param name="isValid">The function to validate the variables</param>
+        /// <param name="normalize">The function to normalize the variables</param>
+        /// <param name="version">The strings indicates the spreadsheet version</param>
         public Spreadsheet(Func<string, bool> isValid, Func<string, string> normalize, string version) : base(isValid, normalize, version)
         {
             spreadsheet = new Dictionary<string, Cell>();
@@ -40,12 +46,20 @@ namespace SS
             this.Changed = false;
         }
 
-
+        /// <summary>
+        /// A  constructor that creates an empty spreadsheet that takes in 
+        /// a string filepath, isValid func, normalize func, and a string 
+        /// to indicates version.
+        /// 
+        /// </summary>
+        /// <param name="isValid">The function to validate the variables</param>
+        /// <param name="normalize">The function to normalize the variables</param>
+        /// <param name="version">The strings indicates the spreadsheet version</param>
+        /// <param name="filePath">The strings indicates the file path</param>
         public Spreadsheet(string filePath, Func<string, bool> isValid, Func<string, string> normalize, string version) : base(isValid, normalize, version)
         {
             spreadsheet = new Dictionary<string, Cell>();
             graph = new DependencyGraph();
-            //  this.Changed = false;
             try
             {
                 using (XmlReader reader = XmlReader.Create(filePath))
@@ -59,6 +73,10 @@ namespace SS
                             switch (reader.Name)
                             {
                                 case "spreadsheet":
+                                    if (!reader["version"].Equals(version))
+                                    {
+                                        throw new SpreadsheetReadWriteException("Not the same version");
+                                    }
                                     this.Version = reader["version"];
                                     break;
                                 case "cell":
@@ -86,22 +104,26 @@ namespace SS
 
         }
 
+
+        /// <summary>
+        /// Indicating whether the spreadsheet has been changed or not.
+        /// 
+        /// </summary>
         public override bool Changed
         {
             get; protected set;
         }
 
         /// <summary>
-        /// A method that sets the conent of the named Cell to a double.
-        /// The method returns a list consisting of name plus the names of 
-        /// all other cells whose value depends, directly or indirectly, on 
-        /// the named cell.
+        /// A method that returns the content of the cell. The content can be
+        /// a Formula, a string, or a double. If the cell does not have any
+        /// content, or the cell doesn't exist yet in the spreadsheet, returns 
+        /// an empty string.
         /// 
         /// </summary>
         /// <param name="name">The string cell name</param>
-        /// <param name="number">The dobule content</param>
         /// <throw> InvalidNameException() if the name is not valid.</throw>
-        /// <returns>A list of name that depended directly and indirectly on the named Cell.</returns>
+        /// <returns>the content of the cell(obj).</returns>
         public override object GetCellContents(string name)
         {
             if (!variableValidator(name))
@@ -116,6 +138,16 @@ namespace SS
             return spreadsheet[newName].getContent();
         }
 
+        /// <summary>
+        /// A method that returns the value of the cell. The content can be
+        /// a FormulaError, a string, or a double. If the cell does not have any
+        /// value, or the cell doesn't exist yet in the spreadsheet, returns 
+        /// an empty string.
+        /// 
+        /// </summary>
+        /// <param name="name">The string cell name</param>
+        /// <throw> InvalidNameException() if the name is not valid.</throw>
+        /// <returns>the value of the cell(obj).</returns>
         public override object GetCellValue(string name)
         {
             if (!variableValidator(name))
@@ -140,6 +172,13 @@ namespace SS
             return new List<string>(spreadsheet.Keys);
         }
 
+        /// <summary>
+        /// A method that returns the version of the spreadsheet from XML.
+        /// 
+        /// </summary>
+        /// <param name="filename">The filepath</param>
+        /// <throw> SpreadsheetReadWriteException() if there are error when finding the version.</throw>
+        /// <returns>the version string.</returns>
         public override string GetSavedVersion(string filename)
         {
             try
@@ -160,12 +199,16 @@ namespace SS
             {
                 throw new SpreadsheetReadWriteException(e.Message);
             }
-            //Takes in filename, read it, find the spreadsheetelement and get attribute
         }
 
+        /// <summary>
+        /// A method that saves the spreadsheet information into a XML
+        /// 
+        /// </summary>
+        /// <param name="filename">The filepath</param>
+        /// <throw> SpreadsheetReadWriteException() if there are error when saving the spreadsheet.</throw>
         public override void Save(string filename)
         {
-            //Github example XM
             XmlWriterSettings settings = new XmlWriterSettings();
             settings.Indent = true;
             settings.IndentChars = "  ";
@@ -409,8 +452,6 @@ namespace SS
 
         }
 
-
-
         /// <summary>
         /// A protected method to get direct dependents.
         /// 
@@ -458,11 +499,8 @@ namespace SS
             {
                 return (double)spreadsheet[name].getValue();
             }
-
             else throw new ArgumentException("invalid.");
-
         }
-
 
     }
 
