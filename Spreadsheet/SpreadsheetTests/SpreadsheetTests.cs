@@ -715,7 +715,7 @@ namespace SS
         }
 
         [TestMethod]
-          public void DefaultVersion()
+        public void DefaultVersion()
         {
             AbstractSpreadsheet ss = new Spreadsheet();
             ss.SetContentsOfCell("a1", "1");
@@ -723,6 +723,34 @@ namespace SS
             ss.Save("newSS.txt");
             Assert.AreEqual("default",ss.GetSavedVersion("newSS.txt"));
         }
+
+        [TestMethod]
+        [ExpectedException(typeof(SpreadsheetReadWriteException))]
+        public void ConstructorThrowWrongVersion()
+        {
+            using (XmlWriter writer = XmlWriter.Create("wrong.txt"))
+            {
+                writer.WriteStartDocument();
+                writer.WriteStartElement("spreadsheet");
+                writer.WriteAttributeString("version", "1.2");
+
+                writer.WriteStartElement("cell");
+                writer.WriteElementString("name", "X1");
+                writer.WriteElementString("content", "hello");
+                writer.WriteEndElement();
+
+                writer.WriteStartElement("cell");
+                writer.WriteElementString("name", "X2");
+                writer.WriteElementString("content", "20");
+                writer.WriteEndElement();
+
+                writer.WriteEndElement();
+                writer.WriteEndDocument();
+            }
+            AbstractSpreadsheet ss = new Spreadsheet("wrong.txt", s => true, s => s.ToUpper(), "1.3");
+           
+        }
+
 
     }
 }
