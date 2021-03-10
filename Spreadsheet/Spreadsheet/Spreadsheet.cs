@@ -85,7 +85,7 @@ namespace SS
                                     reader.Read();
                                     name = reader.Value;
                                     break;
-                                case "content":
+                                case "contents":
                                     reader.Read();
                                     content = reader.Value;
                                     SetContentsOfCell(name, content);
@@ -227,15 +227,15 @@ namespace SS
 
                         if (entry.Value.getContent() is string)
                         {
-                            writer.WriteElementString("content", (string)entry.Value.getContent());
+                            writer.WriteElementString("contents", (string)entry.Value.getContent());
                         }
                         else if (entry.Value.getContent() is double)
                         {
-                            writer.WriteElementString("content", entry.Value.getContent().ToString());
+                            writer.WriteElementString("contents", entry.Value.getContent().ToString());
                         }
                         else
                         {
-                            writer.WriteElementString("content", "=" + entry.Value.getContent().ToString());
+                            writer.WriteElementString("contents", "=" + entry.Value.getContent().ToString());
                         }
                         writer.WriteEndElement();
                     }
@@ -424,7 +424,7 @@ namespace SS
             else if (content.Length > 0 && content.Substring(0, 1).Equals("="))
             {
                 String formula = content.Substring(1);
-                Formula f = new Formula(formula);
+                Formula f = new Formula(formula, this.Normalize, this.IsValid);
                 list = new List<string>(SetCellContents(newName, f));
             }
 
@@ -503,10 +503,6 @@ namespace SS
         }
 
     }
-
-
-
-
 
     /// <summary>
     /// A class represented a Cell that holds a content object and a value 

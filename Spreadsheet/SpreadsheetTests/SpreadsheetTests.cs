@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 using System.Xml;
+using System.IO;
 
 namespace SS
 {
@@ -747,6 +748,7 @@ namespace SS
                 writer.WriteEndElement();
                 writer.WriteEndDocument();
             }
+            int[] a = new int[] { 1, 2, 3 };
             AbstractSpreadsheet ss = new Spreadsheet("wrong.txt", s => true, s => s.ToUpper(), "1.3");
            
         }
@@ -804,6 +806,8 @@ namespace SS
             }
             AbstractSpreadsheet ss = new Spreadsheet("final2.txt", s => true, s => s.ToUpper(), null);
         }
+
+
 
 
     }

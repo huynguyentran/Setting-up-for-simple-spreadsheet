@@ -24,7 +24,9 @@ namespace FormulaTests
             Formula f1 = new Formula("1e10 + 7.0000");
             Formula f2 = new Formula("10000000000 + 7");
             Assert.IsTrue(f1.Equals(f2));
+            Formula f3 = new Formula(f1.ToString());
             Assert.AreEqual(f1.GetHashCode(), f2.GetHashCode());
+            Assert.AreEqual(f1.GetHashCode(), f3.GetHashCode());
         }
 
         [TestMethod()]
