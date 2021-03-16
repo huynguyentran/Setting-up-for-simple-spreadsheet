@@ -47,6 +47,7 @@ namespace TipCalculator
 
         private void EnterAmmountTextBox_TextChanged(object sender, EventArgs e)
         {
+
             if (Double.TryParse(EnterAmmountTextBox.Text, out double val) && double.TryParse(EnterTipTextBox.Text, out double val2))
             {
 
